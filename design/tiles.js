@@ -13,8 +13,10 @@
   Mosaics pick a family first and then one of its variants, so a family with many variants
   doesn't crowd out single tiles. Pass { weight } as the last argument to change how often
   a family shows up. Adding tiles reshuffles existing mosaics, since the pick depends on the list.
+
+  This is an ES module, used by both the app (src/) and design/sketch.html. Types: tiles.d.ts.
 */
-const Tiles = (() => {
+export const Tiles = (() => {
   const SIZE = 12;
   const C = SIZE / 2;
   const TURNS = { up: 0, right: 90, down: 180, left: 270, tl: 0, tr: 90, br: 180, bl: 270 };
@@ -103,18 +105,16 @@ const Tiles = (() => {
   }
 
   /*
-    Fill `el` with a seeded cluster of tiles, densest around `anchor`.
-    opts: { seed, cols, rows, tile (px), density (0..1), anchor ([x, y] in 0..1), colors (CSS colours) }
+    The HTML for a seeded cluster of tiles, densest around `anchor`: one cell per grid slot,
+    left to right, top to bottom. Lay it out with a CSS grid of `cols` columns.
+    opts: { seed, cols, rows, density (0..1), anchor ([x, y] in 0..1), colors (CSS colours) }
   */
-  function mosaic(el, opts) {
+  function mosaicHTML(opts) {
     const rand = rng(hash(opts.seed));
     const { cols, rows, colors, density = 0.6 } = opts;
     const ax = (opts.anchor ? opts.anchor[0] : rand()) * (cols - 1);
     const ay = (opts.anchor ? opts.anchor[1] : rand()) * (rows - 1);
     const maxD = Math.hypot(cols, rows) / 1.5;
-
-    el.style.setProperty("--cols", cols);
-    el.style.setProperty("--tile", `${opts.tile}px`);
 
     let html = "";
     for (let y = 0; y < rows; y++) {
@@ -130,10 +130,17 @@ const Tiles = (() => {
         }
       }
     }
-    el.innerHTML = html;
+    return html;
   }
 
-  return { define, family, list, svg, mosaic };
+  /* Fill `el` with a mosaic (see mosaicHTML), also setting its --cols and --tile (px) variables. */
+  function mosaic(el, opts) {
+    el.style.setProperty("--cols", opts.cols);
+    el.style.setProperty("--tile", `${opts.tile}px`);
+    el.innerHTML = mosaicHTML(opts);
+  }
+
+  return { define, family, list, svg, mosaic, mosaicHTML };
 })();
 
 /* ============================================================

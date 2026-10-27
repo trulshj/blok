@@ -61,9 +61,13 @@ export type NoteSummary = {
   meta: NoteMeta;
   /** Frontmatter values blok couldn't use, e.g. "type: unknown value poem". Defaults were used instead. */
   problems: string[];
+  /** Plain text from the start of the body, for cards. */
+  preview: string;
 };
 
 export type Note = NoteSummary & { body: string };
+
+export type SearchResult = { slug: string; score: number };
 
 export type CreateNoteRequest = Partial<NoteMetaInput> & { title: string; body?: string };
 

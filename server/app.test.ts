@@ -125,6 +125,23 @@ describe("/api/notes", () => {
     expect((await app.request("/api/notes/.trash", get)).status).toBe(400);
   });
 
+  it("lists and searches notes, including ones just created", async () => {
+    const app = await ready();
+    await app.request("/api/notes", post({ title: "Kyoto alley", body: "提灯と暖簾" }));
+    await app.request("/api/notes", post({ title: "Shoji", body: "Geometry nodes" }));
+
+    const list = (await (await app.request("/api/notes", get)).json()) as { notes: Note[] };
+    expect(list.notes.map((n) => n.slug)).toEqual(["shoji", "kyoto-alley"]);
+    expect(list.notes[1]?.preview).toBe("提灯と暖簾");
+
+    const search = async (q: string) =>
+      ((await (await app.request(`/api/search?q=${encodeURIComponent(q)}`, get)).json()) as { results: { slug: string }[] })
+        .results.map((r) => r.slug);
+    expect(await search("暖簾")).toEqual(["kyoto-alley"]);
+    expect(await search("geom")).toEqual(["shoji"]);
+    expect(await search("")).toEqual([]);
+  });
+
   it("returns 409 with a code when a save would clobber a newer change", async () => {
     const app = await ready();
     const note = (await (await app.request("/api/notes", post({ title: "Shared" }))).json()) as Note;

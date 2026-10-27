@@ -1,6 +1,7 @@
 import type { Context, Hono } from "hono";
 import { z } from "zod";
 import { NOTE_LANGS, NOTE_STATUSES, NOTE_TYPES } from "../../shared/types.ts";
+import type { Catalog } from "./catalog.ts";
 import type { NoteStore } from "./store.ts";
 
 export class RequestError extends Error {
@@ -34,32 +35,53 @@ async function readJson<T extends z.ZodType>(c: Context, schema: T): Promise<z.o
   return result.data;
 }
 
-/** /api/notes routes. `store()` is null until the notes folder is set up. */
-export function registerNoteRoutes(app: Hono, store: () => NoteStore | null) {
+/**
+ * /api/notes and /api/search. `runtime()` is null until the notes folder is set up.
+ * Writes refresh the catalog before answering, so the next list or search already includes them.
+ */
+export function registerNoteRoutes(app: Hono, runtime: () => { store: NoteStore; catalog: Catalog } | null) {
   const notes = () => {
-    const s = store();
-    if (!s) throw new RequestError(409, "Set up the notes folder first");
-    return s;
+    const r = runtime();
+    if (!r) throw new RequestError(409, "Set up the notes folder first");
+    return r;
   };
 
-  app.get("/api/notes", async (c) => c.json({ notes: await notes().list() }));
+  app.get("/api/notes", async (c) => c.json({ notes: await notes().catalog.list() }));
+
+  app.get("/api/search", async (c) => c.json({ results: await notes().catalog.search(c.req.query("q") ?? "") }));
 
   app.post("/api/notes", async (c) => {
     const input = await readJson(c, CreateInput);
-    return c.json(await notes().create(input), 201);
+    const { store, catalog } = notes();
+    const note = await store.create(input);
+    await catalog.refresh([note.slug]);
+    return c.json(note, 201);
   });
 
-  app.get("/api/notes/:slug", async (c) => c.json(await notes().get(c.req.param("slug"))));
+  app.get("/api/notes/:slug", async (c) => c.json(await notes().store.get(c.req.param("slug"))));
 
   app.put("/api/notes/:slug", async (c) => {
     const input = await readJson(c, UpdateInput);
-    return c.json(await notes().update(c.req.param("slug"), input));
+    const { store, catalog } = notes();
+    const note = await store.update(c.req.param("slug"), input);
+    await catalog.refresh([note.slug]);
+    return c.json(note);
   });
 
   app.post("/api/notes/:slug/rename", async (c) => {
     const input = await readJson(c, RenameInput);
-    return c.json(await notes().rename(c.req.param("slug"), input.slug));
+    const { store, catalog } = notes();
+    const from = c.req.param("slug");
+    const note = await store.rename(from, input.slug);
+    await catalog.refresh([from, note.slug]);
+    return c.json(note);
   });
 
-  app.delete("/api/notes/:slug", async (c) => c.json(await notes().trash(c.req.param("slug"))));
+  app.delete("/api/notes/:slug", async (c) => {
+    const { store, catalog } = notes();
+    const slug = c.req.param("slug");
+    const result = await store.trash(slug);
+    await catalog.refresh([slug]);
+    return c.json(result);
+  });
 }

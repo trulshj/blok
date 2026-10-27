@@ -5,6 +5,7 @@ import type { BlokEvent } from "../shared/types.ts";
 import { loadConfig, type Config } from "./config.ts";
 import { createHub } from "./events.ts";
 import { localOnly } from "./guard.ts";
+import { createCatalog, type Catalog } from "./notes/catalog.ts";
 import { registerNoteRoutes, RequestError } from "./notes/routes.ts";
 import { createNoteStore, NoteError, type NoteStore } from "./notes/store.ts";
 import { watchNotes, type NotesWatcher } from "./notes/watch.ts";
@@ -18,21 +19,23 @@ export function createApp(root: string, { watch = false } = {}) {
   const hub = createHub();
   const app = new Hono();
 
-  // The store (and watcher) for the current notes folder, created once setup is done
+  // The store, catalog and watcher for the current notes folder, created once setup is done
   // and replaced if the folder changes.
-  let runtime: { dir: string; store: NoteStore; watcher?: NotesWatcher } | null = null;
-  function notes(): NoteStore | null {
+  type Runtime = { dir: string; store: NoteStore; catalog: Catalog; watcher?: NotesWatcher };
+  let runtime: Runtime | null = null;
+  function notes(): Runtime | null {
     if (!setupStatus(config).ready) return null;
     if (runtime?.dir !== config.notesDir) {
       void runtime?.watcher?.close();
       const store = createNoteStore(config.notesDir);
-      runtime = {
-        dir: config.notesDir,
-        store,
-        watcher: watch ? watchNotes(store.dir, (slugs) => hub.publish({ type: "notes", slugs })) : undefined,
+      const catalog = createCatalog(store);
+      const onChange = async (slugs: string[]) => {
+        await catalog.refresh(slugs).catch((err) => console.error("Couldn't refresh notes:", err));
+        hub.publish({ type: "notes", slugs });
       };
+      runtime = { dir: config.notesDir, store, catalog, watcher: watch ? watchNotes(store.dir, onChange) : undefined };
     }
-    return runtime.store;
+    return runtime;
   }
 
   app.use("*", localOnly(() => config.port));

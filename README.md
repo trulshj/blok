@@ -44,5 +44,5 @@ The server is plain TypeScript that Node 24 runs directly, so it has no build st
   file watcher behind the live `/api/events` stream
 - `src/`: React UI
 - `shared/`: types used by both
-- `design/`: the design system: `tokens.css`, the tile generator `tiles.js`, and `sketch.html`
-  (open it directly in a browser)
+- `design/`: the design system: `tokens.css`, the tile generator `tiles.js` (shared with the app), and
+  `sketch.html`. With `npm run dev` running, the sketch is at http://localhost:4747/design/sketch.html.

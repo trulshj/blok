@@ -1143,8 +1143,10 @@ kbd { font: 500 11px var(--mono); padding: 2px 5px; border: 1px solid var(--ink)
   </section>
 </div>
 
-<script src="tiles.js"></script>
-<script>
+<script type="module">
+// tiles.js is an ES module, so this page needs a server: npm run dev, then /design/sketch.html
+import { Tiles } from "./tiles.js";
+
 // ---------- mosaics ----------
 const COLORS = {
   ink: "var(--ink)", accent: "var(--accent)", taupe: "var(--taupe)", cream: "var(--cream)",

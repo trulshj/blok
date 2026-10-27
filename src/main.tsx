@@ -17,6 +17,8 @@ import "@fontsource/ibm-plex-mono/600.css";
 
 import "../design/tokens.css";
 import "./styles/base.css";
+import "./styles/components.css";
+import "./styles/screens.css";
 import { App } from "./App.tsx";
 
 const queryClient = new QueryClient({

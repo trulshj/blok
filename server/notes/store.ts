@@ -5,6 +5,7 @@ import { dirname, join, resolve } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 import type { CreateNoteRequest, Note, NoteMeta, NoteSummary, UpdateNoteRequest } from "../../shared/types.ts";
 import { DEFAULTS, normalizeTags, parseNoteFile, serializeNote, type ParsedNote } from "./frontmatter.ts";
+import { preview } from "./preview.ts";
 import { isValidSlug, slugify, stamp, uniqueSlug } from "./slug.ts";
 
 export const NOTE_FILE = "index.md";
@@ -67,7 +68,19 @@ export function createNoteStore(notesDir: string, { now = () => new Date() } = {
     meta: parsed.meta,
     body: parsed.body,
     problems: parsed.problems,
+    preview: preview(parsed.body),
   });
+
+  /** Folders in notes/ that are valid slugs. They may still lack an index.md. */
+  async function slugs(): Promise<string[]> {
+    try {
+      const entries = await readdir(dir, { withFileTypes: true });
+      return entries.filter((e) => e.isDirectory() && isValidSlug(e.name)).map((e) => e.name);
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code === "ENOENT") return [];
+      throw err;
+    }
+  }
 
   async function save(slug: string, meta: NoteMeta, extra: Record<string, unknown>, body: string): Promise<Note> {
     const path = folder(slug);
@@ -78,28 +91,19 @@ export function createNoteStore(notesDir: string, { now = () => new Date() } = {
 
   return {
     dir,
+    slugs,
 
     async list(): Promise<NoteSummary[]> {
-      let entries;
-      try {
-        entries = await readdir(dir, { withFileTypes: true });
-      } catch (err) {
-        if ((err as NodeJS.ErrnoException).code === "ENOENT") return [];
-        throw err;
-      }
-
       const notes = await Promise.all(
-        entries
-          .filter((e) => e.isDirectory() && isValidSlug(e.name))
-          .map(async (e) => {
-            try {
-              const { meta, problems } = await load(e.name);
-              return { slug: e.name, meta, problems };
-            } catch (err) {
-              if (err instanceof NoteError && err.code === "not-found") return null; // a folder without index.md
-              throw err;
-            }
-          }),
+        (await slugs()).map(async (slug) => {
+          try {
+            const { body, ...summary } = toNote(slug, await load(slug));
+            return summary;
+          } catch (err) {
+            if (err instanceof NoteError && err.code === "not-found") return null; // a folder without index.md
+            throw err;
+          }
+        }),
       );
       return notes.filter((n) => n !== null).sort((a, b) => b.meta.updated.localeCompare(a.meta.updated));
     },

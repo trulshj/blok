@@ -16,16 +16,20 @@ export function isValidSlug(slug: string): boolean {
  * Japanese characters are dropped; a title with nothing left falls back to note-YYYYMMDD-HHmm.
  */
 export function slugify(title: string, when: Date): string {
-  const ascii = title
-    .toLowerCase()
-    .replace(/[æøœßđłþð]/g, (ch) => SPECIAL[ch] ?? "")
-    .normalize("NFKD")
-    .replace(/[̀-ͯ]/g, "") // combining marks: å → a, é → e
+  const ascii = foldLatin(title.toLowerCase())
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
   const slug = trimToLength(ascii);
   return slug || `note-${stamp(when, "minutes")}`;
+}
+
+/** Lowercase Latin text to plain ASCII letters: "ærlig" → "aerlig", "pontochō" → "pontocho". */
+export function foldLatin(lower: string): string {
+  return lower
+    .replace(/[æøœßđłþð]/g, (ch) => SPECIAL[ch] ?? "")
+    .normalize("NFKD")
+    .replace(/[̀-ͯ]/g, ""); // combining marks: å → a, é → e
 }
 
 /** `base`, or `base-2`, `base-3`… if `taken` says it's in use. */
