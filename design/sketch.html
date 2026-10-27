@@ -1,0 +1,1237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>blok design sketch</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='15' height='15' fill='%23FFA947'/%3E%3Crect x='17' width='15' height='15' fill='%23151413'/%3E%3Crect y='17' width='15' height='15' fill='%23151413'/%3E%3Crect x='17' y='17' width='15' height='15' fill='%23FFA947'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Big+Shoulders+Display:wght@800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+JP:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600;700&family=League+Gothic&family=Noto+Sans+JP:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="tokens.css">
+<style>
+/* ============================================================
+   BASE
+   ============================================================ */
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+  font-family: var(--ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input, select, textarea { font: inherit; color: inherit; }
+button { background: none; border: 0; padding: 0; cursor: pointer; border-radius: 0; }
+[lang="ja"] { font-family: var(--jp); }
+.mono { font-family: var(--mono); }
+
+/* ============================================================
+   SKETCH CHROME (not part of the design)
+   ============================================================ */
+.sketch-bar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+  padding: 10px 24px;
+  background: var(--ink);
+  color: var(--cream);
+  font: 500 12px/1.2 var(--mono);
+}
+.sketch-bar strong { letter-spacing: .1em; }
+.sketch-bar label { display: flex; align-items: center; gap: 8px; }
+.sketch-bar select { background: var(--cream); color: var(--ink); border: 0; padding: 4px 6px; font: inherit; }
+
+.page {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 40px 24px 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 64px;
+}
+
+.intro { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; flex-wrap: wrap; }
+.intro p { margin: 0; max-width: 50ch; font-size: 14px; line-height: 1.55; color: var(--ink-2); }
+
+.screen-label { margin: 0 0 12px; font: 600 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+
+.app {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(to right, var(--grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+  outline: 2px solid var(--ink);
+}
+.hide-grid .app { background-image: none; }
+.hide-tiles .mosaic { visibility: hidden; }
+
+/* ============================================================
+   SHARED PIECES
+   ============================================================ */
+.eyebrow {
+  margin: 0;
+  display: flex;
+  gap: 14px;
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1.45;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.eyebrow .dots { letter-spacing: .25em; white-space: nowrap; }
+.eyebrow [lang="ja"] { display: block; letter-spacing: .06em; }
+
+/* black name plates, hung off title blocks */
+.plate {
+  display: inline-flex;
+  align-items: center;
+  gap: .65em;
+  background: var(--ink);
+  color: var(--cream);
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1.1;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: 7px 12px 6px;
+  white-space: nowrap;
+}
+.plate [lang="ja"] { letter-spacing: .14em; font-weight: 700; }
+
+/* staggered title on colour blocks. Each line is trimmed to cap height.
+   --rise: how far down the first line's block starts, as a fraction of the font size
+   (positive = letters rise above the block, negative = block covers the caps) */
+:root { --rise: .2; }
+:root[data-block="full"] { --rise: -.09; }
+
+.block-title {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: .08em;
+  isolation: isolate;
+  font-family: var(--display);
+  font-size: var(--title-size, 64px);
+  font-weight: 400;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--block-ink, var(--ink));
+}
+.bt {
+  position: relative;
+  padding: 0 .14em 0 .2em;
+  white-space: nowrap;
+  text-box: trim-both cap alphabetic;
+}
+.bt::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -.09em 0;
+  background: var(--block, var(--accent));
+}
+.bt:first-child::before { top: calc(var(--rise) * 1em); }
+.bt + .bt { margin-left: .42em; }
+@supports not (text-box: trim-both cap alphabetic) {
+  .block-title { line-height: .8; gap: 0; }
+  .bt::before { inset: .06em 0 .02em; }
+}
+
+/* vertical Japanese slab: ink by default, other options via the sketch bar */
+.slab-v {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ink);
+  color: var(--cream);
+  font-family: var(--jp);
+  font-weight: 700;
+  font-size: 26px;
+  line-height: 1;
+  letter-spacing: .16em;
+  padding: 10px;
+  /* one column of glyphs; set explicitly because browsers misjudge the width of vertical text inside a row */
+  width: calc(1em + 20px);
+  flex: none;
+}
+:root[data-slab="line"] .slab-v { background: var(--block, var(--accent)); color: var(--block-ink, var(--ink)); }
+:root[data-slab="cream"] .slab-v { background: var(--cream); color: var(--ink); outline: 2px solid var(--ink); outline-offset: -2px; }
+
+/* logo: B L O K on four tiles (from notatblokk, Norwegian for notepad). --s is one tile */
+.logo {
+  --s: 20px;
+  display: inline-grid;
+  grid-template-columns: repeat(2, var(--s));
+  grid-auto-rows: var(--s);
+  gap: calc(var(--s) * .1);
+  flex: none;
+}
+.logo b {
+  display: block;
+  padding-top: calc(var(--s) * .184); /* centres the trimmed cap height (.7em of .9s) in the tile */
+  background: var(--accent);
+  color: var(--ink);
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: calc(var(--s) * .9);
+  line-height: 1;
+  text-align: center;
+  text-box: trim-both cap alphabetic;
+}
+.logo b:nth-child(2), .logo b:nth-child(3) { background: var(--ink); color: var(--cream); }
+.logo--strip { grid-template-columns: repeat(4, var(--s)); }
+.logo--strip b:nth-child(3) { background: var(--accent); color: var(--ink); }
+.logo--strip b:nth-child(4) { background: var(--ink); color: var(--cream); }
+
+/* station-style code badge: line letter + number */
+.code {
+  flex: none;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--cream);
+  border: 4px solid var(--t);
+  color: var(--ink);
+  font-family: var(--ui);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.code b { font-size: 9px; }
+.code span { font-size: 14px; margin-top: 1px; }
+.plate .code { width: 30px; height: 30px; border-width: 3px; margin: -4px 0 -4px -6px; }
+.plate .code span { font-size: 12px; }
+
+/* round status stamps */
+.stamp { display: inline-block; line-height: 0; }
+.stamp svg { display: block; overflow: visible; }
+.stamp-bg { fill: var(--ink); }
+.stamp-ring { fill: var(--cream); font-family: var(--ui); font-weight: 700; font-size: 10.5px; letter-spacing: 1px; }
+.stamp-kanji { fill: var(--cream); font-family: var(--jp); font-weight: 700; }
+
+/* pictogram tile mosaics (tiles come from tiles.js) */
+.mosaic {
+  display: grid;
+  grid-template-columns: repeat(var(--cols), var(--tile));
+  grid-auto-rows: var(--tile);
+  gap: calc(var(--tile) * .2);
+  pointer-events: none;
+}
+.tile { display: block; width: 100%; height: 100%; }
+.tile-bg { fill: var(--bg); }
+.tile-fg { fill: var(--fg); stroke: var(--fg); stroke-width: 0; }
+
+/* labels, chips */
+.flabel {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  font-weight: 700;
+  font-size: 11px;
+  line-height: 1.15;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.flabel [lang="ja"] { font-weight: 500; font-size: 10.5px; letter-spacing: .06em; color: var(--muted); }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border: 1.5px solid var(--ink);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.chip [lang="ja"] { font-size: 11px; font-weight: 500; letter-spacing: 0; color: var(--muted); }
+.chip .sw { width: 10px; height: 10px; background: var(--t); }
+.chip.is-on { background: var(--ink); color: var(--cream); }
+.chip.is-on [lang="ja"] { color: var(--panel); }
+.chip[data-type].is-on { background: var(--t); color: var(--t-ink); }
+.chip[data-type].is-on [lang="ja"] { color: inherit; opacity: .75; }
+.chip[data-type].is-on .sw { background: var(--t-ink); }
+
+kbd { font: 500 11px var(--mono); padding: 2px 5px; border: 1px solid var(--ink); }
+
+/* ============================================================
+   TOP BAR
+   ============================================================ */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 12px 24px;
+  background: var(--paper);
+  border-bottom: 2px solid var(--ink);
+}
+.wordmark { display: flex; align-items: center; gap: 12px; color: var(--ink); text-decoration: none; }
+.wm-name { display: flex; flex-direction: column; gap: 6px; }
+.wm-name .wm {
+  font-family: var(--display);
+  font-size: 32px;
+  line-height: 1;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  text-box: trim-both cap alphabetic;
+}
+.wm-name [lang="ja"] { font-weight: 700; font-size: 10.5px; line-height: 1; letter-spacing: .16em; }
+
+.nav { display: flex; gap: 4px; }
+.nav a {
+  padding: 6px 10px;
+  color: var(--ink);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.nav a [lang="ja"] { margin-left: 6px; font-weight: 500; letter-spacing: .04em; color: var(--muted); }
+.nav a.is-on { background: var(--ink); color: var(--cream); }
+.nav a.is-on [lang="ja"] { color: var(--panel); }
+.nav a.is-soon { opacity: .4; }
+
+.search {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 340px;
+  padding: 6px 10px;
+  background: var(--cream);
+  border: 2px solid var(--ink);
+}
+.search svg { width: 16px; height: 16px; flex: none; }
+.search input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; font-size: 14px; }
+.search input::placeholder { color: var(--muted); }
+
+.sync {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.sync [lang="ja"] { font-weight: 500; letter-spacing: .04em; color: var(--muted); }
+.sync .mono { font-weight: 500; letter-spacing: 0; color: var(--ink-2); }
+.ok-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--green); outline: 1.5px solid var(--ink); }
+
+.btn-new {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  background: var(--ink);
+  color: var(--cream);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.btn-new [lang="ja"] { letter-spacing: .06em; color: var(--panel); }
+
+/* ============================================================
+   TITLE COMPOSITION (block title + slab + plates + stamp)
+   ============================================================ */
+.compose { position: relative; padding: 30px 0 30px; }
+.compose-row { display: flex; align-items: stretch; gap: 10px; }
+/* physical margins: in vertical text, margin-block would mean left/right. The slab spans the colour block */
+.compose-row .slab-v {
+  margin-top: calc(var(--title-size) * var(--rise));
+  margin-bottom: calc(var(--title-size) * -.09);
+}
+.compose .plate { position: absolute; z-index: 2; }
+.compose .plate--tl { top: 0; left: -10px; }
+.compose .plate--br { bottom: 0; right: 54px; }
+.compose .plate--bl { bottom: 0; left: 18px; }
+
+/* ============================================================
+   SCREEN 01 — INDEX
+   ============================================================ */
+.hero {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 24px 40px;
+  padding: 44px 40px 36px;
+}
+.hero .mosaic { overflow: hidden; }
+.hero .compose { --title-size: 200px; --block: var(--accent); --block-ink: var(--ink); }
+.hero .slab-v { font-size: 22px; padding-block: 8px; letter-spacing: .1em; }
+.hero .mosaic { align-self: center; }
+.hero-stats { justify-self: end; white-space: nowrap; }
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 28px;
+  padding: 14px 40px;
+  background: var(--paper);
+  border-top: 2px solid var(--ink);
+  border-bottom: 2px solid var(--ink);
+}
+.fgroup { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.fgroup .flabel { margin-right: 6px; }
+.fstamps { display: flex; gap: 6px; }
+.sort { margin-left: auto; font: 500 12px var(--mono); }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 32px 24px;
+  padding: 44px 40px 48px;
+}
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 236px;
+  padding: 16px 18px 16px;
+  background: var(--cream);
+}
+.card:hover { outline: 2px solid var(--ink); }
+.card-stamp { position: absolute; top: -14px; right: 12px; transform: rotate(-10deg); }
+.card-head { display: flex; align-items: center; gap: 10px; padding-right: 48px; }
+.card-type {
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.card-type [lang="ja"] { display: block; font-weight: 500; letter-spacing: .06em; color: var(--muted); }
+.card-head .mosaic { margin-left: auto; }
+.card-title { margin: 4px 0 0; font-size: 19px; font-weight: 700; line-height: 1.22; letter-spacing: -.01em; }
+.card-excerpt {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ink-2);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.card-foot { margin-top: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.lang { font: 600 10.5px var(--mono); padding: 1px 5px; border: 1.5px solid var(--ink); }
+.tag { font: 500 11px var(--mono); color: var(--ink-2); }
+.card-foot time { margin-left: auto; font: 500 11px var(--mono); color: var(--muted); }
+
+.card--feature { grid-column: span 2; grid-row: span 2; padding: 18px 22px 20px; gap: 14px; }
+.card--feature .card-stamp { top: -22px; right: 20px; }
+.card--feature .card-head { padding-right: 76px; }
+.cover { position: relative; margin: 0; }
+.cover .render { display: block; width: 100%; height: auto; }
+.cover .plate { position: absolute; left: 0; bottom: 0; font: 500 11px var(--mono); letter-spacing: 0; text-transform: none; }
+.card--feature .block-title { --title-size: 66px; --block: var(--t); --block-ink: var(--t-ink); margin: 14px 0 8px; }
+.card--feature .card-excerpt { font-size: 14.5px; }
+
+/* ============================================================
+   SCREEN 02 — NOTE
+   ============================================================ */
+.note-layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; }
+.note-main { padding: 26px 56px 60px; border-right: 2px solid var(--ink); }
+
+.back {
+  display: inline-flex;
+  gap: 8px;
+  color: var(--ink);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.back [lang="ja"] { font-weight: 500; letter-spacing: .04em; color: var(--muted); }
+
+.note-head { display: flex; align-items: center; gap: 36px; margin: 44px 0 40px; }
+.note-head .compose { --title-size: 118px; --block: var(--t); --block-ink: var(--t-ink); padding: 0 0 24px; }
+.note-head .bt:first-child { padding-left: .82em; }
+.note-head .head-stamp { position: absolute; z-index: 3; top: -36px; left: -14px; transform: rotate(-12deg); }
+.note-head .slab-v { font-size: 24px; }
+
+.editor { max-width: 66ch; font-size: 17px; line-height: 1.75; }
+.editor p, .editor ul, .editor h2 { margin: 0 0 .9em; position: relative; }
+.editor h2 { margin-top: 1.5em; font-size: 26px; line-height: 1.25; letter-spacing: -.01em; }
+.editor ul { padding-left: 1.3em; }
+.editor li { margin-bottom: .25em; }
+.editor li::marker { content: "–  "; }
+.md { display: none; color: var(--muted); font-weight: 400; }
+.is-active .md { display: inline; }
+.is-active::before {
+  content: "";
+  position: absolute;
+  left: -22px;
+  top: .3em;
+  bottom: .3em;
+  width: 4px;
+  background: var(--t);
+}
+.caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.15em;
+  margin-left: 1px;
+  vertical-align: text-bottom;
+  background: var(--ink);
+  animation: blink 1.1s steps(1) infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+.ln-img { margin: 1.4em 0 1.6em; }
+.ln-img .render { display: block; width: 100%; height: auto; }
+.ln-img figcaption {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0 0;
+  border-top: 2px solid var(--ink);
+  margin-top: 6px;
+  font: 500 11.5px var(--mono);
+  color: var(--ink-2);
+}
+
+.dropzone {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 14px;
+  margin-top: 40px;
+  padding: 18px;
+  border: 2px dashed var(--ink);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+.dropzone [lang="ja"] { letter-spacing: .06em; font-weight: 500; }
+.dropzone .mono { font-weight: 500; letter-spacing: 0; color: var(--muted); }
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 28px 24px 32px;
+  background: var(--panel);
+}
+.meta-sec { display: flex; flex-direction: column; gap: 10px; }
+.seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.status-pick { display: flex; gap: 14px; }
+.status-pick button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  opacity: .32;
+}
+.status-pick button.is-on { opacity: 1; }
+.field {
+  padding: 9px 11px;
+  background: var(--cream);
+  border: 2px solid var(--ink);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.field[lang="ja"] { font-size: 16px; letter-spacing: .06em; }
+.hint { margin: -4px 0 0; font-size: 11.5px; color: var(--muted); }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tags .tag { padding: 3px 7px; background: var(--cream); border: 1.5px solid var(--ink); color: var(--ink); }
+.tags .add { border-style: dashed; background: transparent; }
+.cover-pick { display: flex; align-items: center; gap: 12px; font: 500 11.5px var(--mono); }
+.cover-pick svg { width: 104px; height: auto; display: block; outline: 2px solid var(--ink); }
+.dates { display: grid; grid-template-columns: auto 1fr; gap: 3px 14px; margin: 0; font: 500 11.5px var(--mono); color: var(--ink-2); }
+.dates dt { font-weight: 600; color: var(--ink); }
+.dates dd { margin: 0; }
+.publish {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  padding: 14px 16px;
+  background: var(--ink);
+  color: var(--cream);
+  opacity: .4;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.publish [lang="ja"] { margin-left: 6px; letter-spacing: .06em; }
+.publish .mono { font-weight: 500; letter-spacing: .04em; }
+
+.statusline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 24px;
+  padding: 10px 24px;
+  background: var(--paper);
+  border-top: 2px solid var(--ink);
+  font: 500 11.5px var(--mono);
+}
+.statusline .saved { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.statusline .path { margin-left: auto; color: var(--muted); }
+
+/* ============================================================
+   03 — TOKENS
+   ============================================================ */
+.tokens { display: grid; gap: 40px; padding: 36px 40px 44px; }
+.tok-group { display: flex; flex-direction: column; gap: 14px; }
+.lines { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
+.neutrals { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.swatch-block {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  height: 104px;
+  padding: 10px;
+  background: var(--sw, var(--t));
+  color: var(--sw-ink, var(--t-ink));
+  outline: 1.5px solid var(--ink);
+  font-family: var(--jp);
+  font-weight: 700;
+  font-size: 36px;
+  line-height: 1;
+}
+.swatch-block .code { align-self: flex-start; }
+.swatch p { margin: 8px 0 0; font-size: 13px; }
+.swatch p + p { margin-top: 2px; font: 500 11.5px var(--mono); color: var(--ink-2); }
+
+.logo-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 28px 48px; }
+.logo-row figure { margin: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+.logo-row figcaption { font: 500 11px var(--mono); color: var(--ink-2); letter-spacing: .04em; text-transform: uppercase; }
+.fav-a { fill: var(--accent); }
+.fav-i { fill: var(--ink); }
+
+.tileset { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 16px 10px; }
+.tileset figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.tileset .tile { width: 44px; height: 44px; }
+.tileset figcaption { font: 500 10.5px var(--mono); color: var(--ink-2); }
+.tile-lab { display: flex; flex-direction: column; gap: 12px; padding: 18px; background: var(--cream); outline: 1.5px solid var(--ink); }
+.tile-lab label { display: flex; align-items: center; gap: 10px; font: 600 12px var(--mono); }
+.tile-lab input { width: 280px; padding: 5px 8px; border: 2px solid var(--ink); background: var(--paper); font: 500 13px var(--mono); }
+.tile-lab .hint { margin: 0; }
+
+.stamps-row { display: flex; gap: 32px; align-items: center; flex-wrap: wrap; }
+.stamps-row figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 10px; font-size: 12px; font-weight: 700; letter-spacing: .1em; }
+.stamps-row figcaption [lang="ja"] { font-weight: 500; letter-spacing: .04em; color: var(--muted); margin-left: 6px; }
+.specimens { display: grid; grid-template-columns: 1.3fr 1fr 1fr 1fr; gap: 28px; align-items: end; }
+.specimens p { margin: 0; }
+.specimens small { display: block; margin-top: 8px; font: 500 11px var(--mono); color: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
+.spec-display { font-family: var(--display); font-size: 72px; line-height: .9; text-transform: uppercase; white-space: nowrap; }
+.spec-ui { font-size: 18px; line-height: 1.45; }
+.spec-jp { font-family: var(--jp); font-size: 18px; line-height: 1.7; }
+.spec-mono { font-family: var(--mono); font-size: 15px; line-height: 1.5; }
+
+/* ============================================================
+   RESPONSIVE (rough)
+   ============================================================ */
+@media (max-width: 1180px) {
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hero { grid-template-columns: 1fr; }
+  .hero .mosaic, .hero-stats { justify-self: start; }
+  .note-layout { grid-template-columns: 1fr; }
+  .note-main { border-right: 0; border-bottom: 2px solid var(--ink); }
+  .note-head .mosaic { display: none; }
+  .lines { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .specimens { grid-template-columns: 1fr 1fr; }
+  .search { width: 220px; }
+}
+@media (max-width: 760px) {
+  .page { padding: 24px 16px 64px; }
+  .grid { grid-template-columns: 1fr; padding: 32px 16px; }
+  .card--feature { grid-column: auto; }
+  .hero { padding: 32px 16px; }
+  .hero .compose { --title-size: 110px; }
+  .note-main { padding: 24px 24px 40px; }
+  .note-head .compose { --title-size: 70px; }
+  .topbar { flex-wrap: wrap; }
+  .search { order: 5; width: 100%; margin-left: 0; }
+  .lines, .neutrals { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+</style>
+</head>
+<body>
+
+<!-- shared illustration: a stand-in for a Blender render -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="render-alley" viewBox="0 0 320 180">
+    <rect width="320" height="180" fill="#1F1D1B"/>
+    <path d="M0 40 Q 160 78 320 34" fill="none" stroke="#5A534A" stroke-width="1.2"/>
+    <path d="M0 52 Q 150 84 320 48" fill="none" stroke="#5A534A" stroke-width="1"/>
+    <rect x="130" y="66" width="60" height="64" fill="#34302C"/>
+    <rect x="148" y="82" width="24" height="15" fill="#FFA947" opacity=".85"/>
+    <polygon points="0,20 130,66 130,130 0,180" fill="#2A2724"/>
+    <polygon points="320,20 190,66 190,130 320,180" fill="#2A2724"/>
+    <polygon points="0,6 142,60 130,70 0,28" fill="#4A443D"/>
+    <polygon points="320,6 178,60 190,70 320,28" fill="#4A443D"/>
+    <polygon points="0,180 320,180 190,130 130,130" fill="#3A3631"/>
+    <ellipse cx="160" cy="160" rx="70" ry="9" fill="#FFA947" opacity=".14"/>
+    <polygon points="26,92 72,106 72,132 26,124" fill="#2E4A87"/>
+    <path d="M41 97 V127 M56 101 V129" stroke="#1F1D1B" stroke-width="1.6"/>
+    <ellipse cx="96" cy="94" rx="7" ry="10" fill="#FFA947"/>
+    <ellipse cx="116" cy="99" rx="4.5" ry="6.5" fill="#FFA947"/>
+    <ellipse cx="232" cy="92" rx="7.5" ry="10.5" fill="#EE4F2E"/>
+    <ellipse cx="208" cy="99" rx="4.5" ry="6.5" fill="#FFA947"/>
+    <polygon points="258,118 292,128 292,150 258,140" fill="#8A8275"/>
+    <circle cx="275" cy="134" r="6" fill="#5A534A"/>
+    <polygon points="226,138 248,145 248,160 226,153" fill="#8A8275"/>
+  </symbol>
+</svg>
+
+<div class="sketch-bar">
+  <strong>SKETCH CONTROLS</strong>
+  <label>Paper
+    <select data-attr="paper">
+      <option value="warm">Warm</option>
+      <option value="sand">Sand</option>
+      <option value="original">Sketch 01</option>
+    </select>
+  </label>
+  <label>Slab
+    <select data-attr="slab">
+      <option value="ink">Ink</option>
+      <option value="line">Block colour</option>
+      <option value="cream">Cream + outline</option>
+    </select>
+  </label>
+  <label>Block
+    <select data-attr="block">
+      <option value="rise">Letters rise above</option>
+      <option value="full">Covers the caps</option>
+    </select>
+  </label>
+  <label>Display
+    <select data-var="--display-face">
+      <option value='"Bebas Neue"'>Bebas Neue</option>
+      <option value='"Anton"'>Anton</option>
+      <option value='"League Gothic"'>League Gothic</option>
+      <option value='"Big Shoulders Display"'>Big Shoulders</option>
+    </select>
+  </label>
+  <label>UI
+    <select data-var="--latin-face">
+      <option value='"IBM Plex Sans"'>IBM Plex Sans</option>
+      <option value='"Space Grotesk"'>Space Grotesk</option>
+      <option value='"Instrument Sans"'>Instrument Sans</option>
+    </select>
+  </label>
+  <label>Japanese
+    <select data-var="--jp-face">
+      <option value='"IBM Plex Sans JP"'>IBM Plex Sans JP</option>
+      <option value='"Zen Kaku Gothic New"'>Zen Kaku Gothic New</option>
+      <option value='"Noto Sans JP"'>Noto Sans JP</option>
+    </select>
+  </label>
+  <label>Accent
+    <select data-var="--accent">
+      <option value="#FFA947">Orange 橙</option>
+      <option value="#EE4F2E">Vermilion 朱</option>
+      <option value="#6CB2C1">Teal 空</option>
+    </select>
+  </label>
+  <label><input type="checkbox" data-hide="hide-grid" checked> Grid</label>
+  <label><input type="checkbox" data-hide="hide-tiles" checked> Tiles</label>
+</div>
+
+<div class="page">
+
+  <header class="intro">
+    <p class="eyebrow"><span class="dots">● ●</span><span>blok — design sketch 03<span lang="ja">デザイン案・その三</span></span></p>
+    <p>Changes from sketch 02: BLOK as the index title, a four-tile B L O K logo (from notatblokk), トルルス, and a bolder green for visualizations.</p>
+  </header>
+
+  <!-- ======================================================
+       SCREEN 01 — INDEX
+       ====================================================== -->
+  <section aria-label="Index screen">
+    <p class="screen-label">01 — Index / 一覧</p>
+    <div class="app">
+
+      <header class="topbar">
+        <a href="#" class="wordmark"><span class="logo" aria-hidden="true"><b>B</b><b>L</b><b>O</b><b>K</b></span><span class="wm-name"><span class="wm">Blok</span><span lang="ja">ブロック</span></span></a>
+        <nav class="nav">
+          <a href="#" class="is-on">Notes<span lang="ja">ノート</span></a>
+          <a href="#" class="is-soon">Vocab<span lang="ja">単語</span></a>
+        </nav>
+        <label class="search">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="6.5" cy="6.5" r="4.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M10 10l4.5 4.5" stroke="currentColor" stroke-width="2"/></svg>
+          <input placeholder="Search notes · 検索">
+          <kbd>Ctrl K</kbd>
+        </label>
+        <button class="sync"><i class="ok-dot"></i>Synced<span lang="ja">同期済み</span><span class="mono">↑0 ↓0</span></button>
+        <button class="btn-new">+ New<span lang="ja">新規</span></button>
+      </header>
+
+      <div class="hero">
+        <div class="compose">
+          <span class="plate plate--tl">Truls' notatblokk</span>
+          <div class="compose-row">
+            <h1 class="block-title"><span class="bt">Blok</span></h1>
+            <div class="slab-v" lang="ja">ノート帳</div>
+          </div>
+          <span class="plate plate--br" lang="ja">トルルスのノート</span>
+        </div>
+        <div class="mosaic" data-seed="blok-index" data-cols="12" data-rows="6" data-tile="24" data-density="0.8" data-ax="0.1" data-ay="0.55" data-colors="ink,accent,taupe,cream,vermilion,teal"></div>
+        <p class="eyebrow hero-stats"><span class="dots">● ●</span><span>9 notes · 4 seedlings · 2 published<span lang="ja">ノート9件・苗4件・公開2件</span></span></p>
+      </div>
+
+      <div class="filters">
+        <div class="fgroup">
+          <span class="flabel">Type<span lang="ja">種類</span></span>
+          <button class="chip is-on">All<span lang="ja">すべて</span></button>
+          <button class="chip" data-type="writing"><i class="sw"></i>Writing<span lang="ja">文章</span></button>
+          <button class="chip" data-type="art"><i class="sw"></i>Art<span lang="ja">作品</span></button>
+          <button class="chip" data-type="story"><i class="sw"></i>Story<span lang="ja">物語</span></button>
+          <button class="chip" data-type="note"><i class="sw"></i>Note<span lang="ja">メモ</span></button>
+          <button class="chip" data-type="visualization"><i class="sw"></i>Viz<span lang="ja">可視化</span></button>
+        </div>
+        <div class="fgroup">
+          <span class="flabel">Lang<span lang="ja">言語</span></span>
+          <button class="chip">NO</button>
+          <button class="chip">EN</button>
+          <button class="chip">JA</button>
+        </div>
+        <div class="fgroup">
+          <span class="flabel">Status<span lang="ja">状態</span></span>
+          <div class="fstamps">
+            <span class="stamp" data-stamp="seedling" data-size="34" title="Seedling"></span>
+            <span class="stamp" data-stamp="budding" data-size="34" title="Budding"></span>
+            <span class="stamp" data-stamp="evergreen" data-size="34" title="Evergreen"></span>
+          </div>
+        </div>
+        <span class="sort">SORT: UPDATED ↓</span>
+      </div>
+
+      <div class="grid">
+        <article class="card card--feature" data-type="art">
+          <span class="stamp card-stamp" data-stamp="budding" data-size="72"></span>
+          <header class="card-head">
+            <span class="code"><b>A</b><span>01</span></span>
+            <span class="card-type">Art<span lang="ja">作品</span></span>
+            <span class="mosaic" data-seed="kyoto-alley-blockout" data-cols="7" data-rows="2" data-tile="13" data-density="0.95" data-colors="ink,t,taupe,paper"></span>
+          </header>
+          <figure class="cover">
+            <svg class="render" viewBox="0 0 320 180" role="img" aria-label="Render: night view down a narrow alley with lanterns"><use href="#render-alley"/></svg>
+            <span class="plate">render-01.avif</span>
+          </figure>
+          <h3 class="block-title"><span class="bt">Kyoto alley</span><span class="bt">blockout</span></h3>
+          <p class="card-excerpt">Blocking out a Pontochō-style alley from Street View. Lanterns, noren, far too many AC units. The roof overhangs are still too short.</p>
+          <footer class="card-foot"><span class="lang">EN</span><span class="tag">#blender</span><span class="tag">#3d</span><span class="tag">#kyoto</span><time>2 min ago</time></footer>
+        </article>
+
+        <article class="card" data-type="note">
+          <span class="stamp card-stamp" data-stamp="seedling" data-size="46"></span>
+          <header class="card-head">
+            <span class="code"><b>N</b><span>01</span></span>
+            <span class="card-type">Note<span lang="ja">メモ</span></span>
+            <span class="mosaic" data-seed="minecraft-vocab-1" data-cols="4" data-rows="2" data-tile="11" data-density="0.95" data-colors="ink,t,taupe,paper"></span>
+          </header>
+          <h3 class="card-title">Minecraft で覚えた言葉 #1</h3>
+          <p class="card-excerpt">Vocabulary I picked up playing Minecraft in Japanese — torches, caves, villagers, and the animals that keep getting in the way.</p>
+          <footer class="card-foot"><span class="lang">EN</span><span class="tag">#japanese</span><span class="tag">#minecraft</span><time>yesterday</time></footer>
+        </article>
+
+        <article class="card" data-type="note">
+          <span class="stamp card-stamp" data-stamp="budding" data-size="46"></span>
+          <header class="card-head">
+            <span class="code"><b>N</b><span>02</span></span>
+            <span class="card-type">Note<span lang="ja">メモ</span></span>
+            <span class="mosaic" data-seed="kanji-mixups-ji" data-cols="4" data-rows="2" data-tile="11" data-density="0.95" data-colors="ink,t,taupe,paper"></span>
+          </header>
+          <h3 class="card-title">Kanji I keep mixing up: 待 持 特</h3>
+          <p class="card-excerpt">Same 寺 on the right, three different radicals. 待 wait, 持 hold, 特 special — a mnemonic for each so I stop guessing.</p>
+          <footer class="card-foot"><span class="lang">EN</span><span class="tag">#japanese</span><span class="tag">#kanji</span><time>3 days ago</time></footer>
+        </article>
+
+        <article class="card" data-type="note">
+          <span class="stamp card-stamp" data-stamp="seedling" data-size="46"></span>
+          <header class="card-head">
+            <span class="code"><b>N</b><span>03</span></span>
+            <span class="card-type">Note<span lang="ja">メモ</span></span>
+            <span class="mosaic" data-seed="yamanote-signage" data-cols="4" data-rows="2" data-tile="11" data-density="0.95" data-colors="ink,t,taupe,paper"></span>
+          </header>
+          <h3 class="card-title">Signage on the Yamanote line</h3>
+          <p class="card-excerpt">Station signs carry three scripts, a line colour and a number. Collecting the ones that break their own grid.</p>
+          <footer class="card-foot"><span class="lang">EN</span><span class="tag">#typography</span><span class="tag">#japan</span><time>5 days ago</time></footer>
+        </article>
+
+        <article class="card" data-type="writing">
+          <span class="stamp card-stamp" data-stamp="seedling" data-size="46"></span>
+          <header class="card-head">
+            <span class="code"><b>W</b><span>02</span></span>
+            <span class="card-type">Writing<span lang="ja">文章</span></span>
+            <span class="mosaic" data-seed="procedural-shoji" data-cols="4" data-rows="2" data-tile="11" data-density="0.95" data-colors="ink,t,taupe,paper"></span>
+          </header>
+          <h3 class="card-title">Geometry nodes: procedural shoji</h3>
+          <p class="card-excerpt">A kumiko lattice from two inputs. Next: random paper wear and a light behind it that makes it glow.</p>
+          <footer class="card-foot"><span class="lang">EN</span><span class="tag">#blender</span><span class="tag">#geometry-nodes</span><time>1 week ago</time></footer>
+        </article>
+
+        <article class="card" data-type="writing">
+          <span class="stamp card-stamp" data-stamp="budding" data-size="46"></span>
+          <header class="card-head">
+            <span class="code"><b>W</b><span>03</span></span>
+            <span class="card-type">Writing<span lang="ja">文章</span></span>
+            <span class="mosaic" data-seed="kaffekrus-light" data-cols="4" data-rows="2" data-tile="11" data-density="0.95" data-colors="ink,t,taupe,paper"></span>
+          </header>
+          <h3 class="card-title">Kaffekrus in light mode</h3>
+          <p class="card-excerpt">Paper, colour blocks, name plates. What truls.dev might borrow back from blok.</p>
+          <footer class="card-foot"><span class="lang">EN</span><span class="tag">#truls-dev</span><span class="tag">#design</span><time>2 weeks ago</time></footer>
+        </article>
+
+        <article class="card" data-type="story">
+          <span class="stamp card-stamp" data-stamp="seedling" data-size="46"></span>
+          <header class="card-head">
+            <span class="code"><b>S</b><span>01</span></span>
+            <span class="card-type">Story<span lang="ja">物語</span></span>
+            <span class="mosaic" data-seed="reven-ved-fushimi" data-cols="4" data-rows="2" data-tile="11" data-density="0.95" data-colors="ink,t,taupe,paper"></span>
+          </header>
+          <h3 class="card-title">Reven ved Fushimi</h3>
+          <p class="card-excerpt">En kort fortelling om en rev, tusen torii og en paraply som ble borte.</p>
+          <footer class="card-foot"><span class="lang">NO</span><span class="tag">#fortelling</span><time>30 Sep</time></footer>
+        </article>
+
+        <article class="card" data-type="writing">
+          <span class="stamp card-stamp" data-stamp="evergreen" data-size="46"></span>
+          <header class="card-head">
+            <span class="code"><b>W</b><span>01</span></span>
+            <span class="card-type">Writing<span lang="ja">文章</span></span>
+            <span class="mosaic" data-seed="hva-er-visualisering" data-cols="4" data-rows="2" data-tile="11" data-density="0.95" data-colors="ink,t,taupe,paper"></span>
+          </header>
+          <h3 class="card-title">Hva er visualisering?</h3>
+          <p class="card-excerpt">Et forsøk på å svare på spørsmålet jeg får oftest når jeg forteller hva jeg studerer.</p>
+          <footer class="card-foot"><span class="lang">NO</span><span class="tag">#visualisering</span><time>12 Mar</time></footer>
+        </article>
+
+        <article class="card" data-type="visualization">
+          <span class="stamp card-stamp" data-stamp="evergreen" data-size="46"></span>
+          <header class="card-head">
+            <span class="code"><b>V</b><span>01</span></span>
+            <span class="card-type">Viz<span lang="ja">可視化</span></span>
+            <span class="mosaic" data-seed="imdb-aerlig-vs-villedende" data-cols="4" data-rows="2" data-tile="11" data-density="0.95" data-colors="ink,t,taupe,paper"></span>
+          </header>
+          <h3 class="card-title">IMDb Top 1000: Ærlig vs. villedende</h3>
+          <p class="card-excerpt">Det samme datasettet, to ganske ulike historier — og hvor mye designvalg styrer hvordan vi leser data.</p>
+          <footer class="card-foot"><span class="lang">NO</span><span class="tag">#d3</span><span class="tag">#datadesign</span><time>10 Jun 2025</time></footer>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================
+       SCREEN 02 — NOTE
+       ====================================================== -->
+  <section aria-label="Note screen">
+    <p class="screen-label">02 — Note / ノート</p>
+    <div class="app" data-type="art">
+
+      <header class="topbar">
+        <a href="#" class="wordmark"><span class="logo" aria-hidden="true"><b>B</b><b>L</b><b>O</b><b>K</b></span><span class="wm-name"><span class="wm">Blok</span><span lang="ja">ブロック</span></span></a>
+        <nav class="nav">
+          <a href="#" class="is-on">Notes<span lang="ja">ノート</span></a>
+          <a href="#" class="is-soon">Vocab<span lang="ja">単語</span></a>
+        </nav>
+        <label class="search">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="6.5" cy="6.5" r="4.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M10 10l4.5 4.5" stroke="currentColor" stroke-width="2"/></svg>
+          <input placeholder="Search notes · 検索">
+          <kbd>Ctrl K</kbd>
+        </label>
+        <button class="sync"><i class="ok-dot"></i>Synced<span lang="ja">同期済み</span><span class="mono">↑1 ↓0</span></button>
+        <button class="btn-new">+ New<span lang="ja">新規</span></button>
+      </header>
+
+      <div class="note-layout">
+        <main class="note-main">
+          <a href="#" class="back">← All notes<span lang="ja">ノート一覧</span></a>
+
+          <div class="note-head">
+            <div class="compose">
+              <span class="stamp head-stamp" data-stamp="budding" data-size="104"></span>
+              <div class="compose-row">
+                <h1 class="block-title"><span class="bt">Kyoto alley</span><span class="bt">blockout</span></h1>
+                <div class="slab-v" lang="ja">京都の路地</div>
+              </div>
+              <span class="plate plate--bl"><span class="code"><b>A</b><span>01</span></span>Art<span lang="ja">作品</span></span>
+            </div>
+            <div class="mosaic" data-seed="kyoto-alley-blockout" data-cols="7" data-rows="7" data-tile="22" data-density="0.8" data-ax="0.15" data-ay="0.5" data-colors="ink,t,taupe,cream"></div>
+          </div>
+
+          <div class="editor">
+            <p>Walked <span lang="ja">先斗町</span> Pontochō on Street View for an hour. What makes these alleys read as Kyoto isn't the wood — it's the <span lang="ja">暖簾</span> noren in the doorways and the lanterns at eye level.</p>
+            <h2><span class="md">## </span>Reference hunt</h2>
+            <ul>
+              <li><span lang="ja">提灯</span> chōchin: emission ≈ 4, warm orange, never quite centred</li>
+              <li><span lang="ja">室外機</span> AC units on every wall. There is no such thing as too many</li>
+              <li><span lang="ja">電線</span> wires. So many wires. Curve + array modifier</li>
+            </ul>
+            <figure class="ln-img">
+              <svg class="render" viewBox="0 0 320 180" role="img" aria-label="Render: night view down a narrow alley with lanterns"><use href="#render-alley"/></svg>
+              <figcaption><span>render-01.avif</span><span>2400 × 1350 · 412 KB</span></figcaption>
+            </figure>
+            <h2><span class="md">## </span>Next</h2>
+            <p class="is-active"><span class="md">**</span><strong>Roof overhangs</strong><span class="md">**</span> are too short. Push them out 30 cm and the alley gets as dark as it should<span class="caret"></span></p>
+            <div class="dropzone">Drop renders here<span lang="ja">ここに画像をドロップ</span><span class="mono">PNG · JPG → AVIF</span></div>
+          </div>
+        </main>
+
+        <aside class="meta">
+          <section class="meta-sec">
+            <span class="flabel">Type<span lang="ja">種類</span></span>
+            <div class="seg">
+              <button class="chip" data-type="writing"><i class="sw"></i>Writing</button>
+              <button class="chip is-on" data-type="art"><i class="sw"></i>Art</button>
+              <button class="chip" data-type="story"><i class="sw"></i>Story</button>
+              <button class="chip" data-type="note"><i class="sw"></i>Note</button>
+              <button class="chip" data-type="visualization"><i class="sw"></i>Viz</button>
+            </div>
+          </section>
+
+          <section class="meta-sec">
+            <span class="flabel">Language<span lang="ja">言語</span></span>
+            <div class="seg">
+              <button class="chip">NO</button>
+              <button class="chip is-on">EN</button>
+              <button class="chip">JA</button>
+            </div>
+          </section>
+
+          <section class="meta-sec">
+            <span class="flabel">Status<span lang="ja">状態</span></span>
+            <div class="status-pick">
+              <button><span class="stamp" data-stamp="seedling" data-size="58"></span>Seedling</button>
+              <button class="is-on"><span class="stamp" data-stamp="budding" data-size="58"></span>Budding</button>
+              <button><span class="stamp" data-stamp="evergreen" data-size="58"></span>Evergreen</button>
+            </div>
+          </section>
+
+          <section class="meta-sec">
+            <span class="flabel">Japanese title<span lang="ja">和題</span></span>
+            <div class="field" lang="ja">京都の路地</div>
+            <p class="hint">Optional. Shown on the vertical slab.</p>
+          </section>
+
+          <section class="meta-sec">
+            <span class="flabel">Tags<span lang="ja">タグ</span></span>
+            <div class="tags"><span class="tag">#blender</span><span class="tag">#3d</span><span class="tag">#kyoto</span><span class="tag add">+ add</span></div>
+          </section>
+
+          <section class="meta-sec">
+            <span class="flabel">Excerpt<span lang="ja">抜粋</span></span>
+            <div class="field">Blocking out a Pontochō-style alley from Street View. Lanterns, noren, far too many AC units.</div>
+          </section>
+
+          <section class="meta-sec">
+            <span class="flabel">Cover<span lang="ja">表紙</span></span>
+            <div class="cover-pick"><svg viewBox="0 0 320 180" aria-hidden="true"><use href="#render-alley"/></svg>render-01.avif</div>
+          </section>
+
+          <dl class="dates">
+            <dt>CODE</dt><dd>A·01</dd>
+            <dt>CREATED</dt><dd>2026-10-21 19:42</dd>
+            <dt>UPDATED</dt><dd>2 min ago</dd>
+          </dl>
+
+          <div class="publish" aria-disabled="true"><span>Publish to truls.dev<span lang="ja">公開</span></span><span class="mono">PHASE 2</span></div>
+        </aside>
+      </div>
+
+      <footer class="statusline">
+        <span class="saved"><i class="ok-dot"></i>Saved <span lang="ja">保存済み</span></span>
+        <span>418 words</span>
+        <span>1 image</span>
+        <span class="path">blok-notes/notes/kyoto-alley-blockout/index.md</span>
+      </footer>
+    </div>
+  </section>
+
+  <!-- ======================================================
+       03 — TOKENS
+       ====================================================== -->
+  <section aria-label="Design tokens">
+    <p class="screen-label">03 — Tokens / トークン</p>
+    <div class="app tokens">
+
+      <div class="tok-group">
+        <span class="flabel">Logo<span lang="ja">ロゴ — from notatblokk, Norwegian for notepad</span></span>
+        <div class="logo-row">
+          <figure><span class="logo" style="--s: 60px" aria-hidden="true"><b>B</b><b>L</b><b>O</b><b>K</b></span><figcaption>App icon</figcaption></figure>
+          <figure><span class="logo logo--strip" style="--s: 44px" aria-hidden="true"><b>B</b><b>L</b><b>O</b><b>K</b></span><figcaption>Strip</figcaption></figure>
+          <figure><span class="wordmark"><span class="logo" aria-hidden="true"><b>B</b><b>L</b><b>O</b><b>K</b></span><span class="wm-name"><span class="wm">Blok</span><span lang="ja">ブロック</span></span></span><figcaption>Top bar</figcaption></figure>
+          <figure><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="fav-a" width="15" height="15"/><rect class="fav-i" x="17" width="15" height="15"/><rect class="fav-i" y="17" width="15" height="15"/><rect class="fav-a" x="17" y="17" width="15" height="15"/></svg><figcaption>Favicon</figcaption></figure>
+        </div>
+      </div>
+
+      <div class="tok-group">
+        <span class="flabel">Lines<span lang="ja">路線 — one colour per garden type</span></span>
+        <div class="lines">
+          <div class="swatch" data-type="writing"><div class="swatch-block"><span class="code"><b>W</b><span>01</span></span><span lang="ja">橙</span></div><p><b>Writing</b> <span lang="ja">文章</span></p><p>daidai · #FFA947</p></div>
+          <div class="swatch" data-type="art"><div class="swatch-block"><span class="code"><b>A</b><span>01</span></span><span lang="ja">朱</span></div><p><b>Art</b> <span lang="ja">作品</span></p><p>shu · #EE4F2E</p></div>
+          <div class="swatch" data-type="story"><div class="swatch-block"><span class="code"><b>S</b><span>01</span></span><span lang="ja">藍</span></div><p><b>Story</b> <span lang="ja">物語</span></p><p>ai · #2E4A87</p></div>
+          <div class="swatch" data-type="note"><div class="swatch-block"><span class="code"><b>N</b><span>01</span></span><span lang="ja">空</span></div><p><b>Note</b> <span lang="ja">メモ</span></p><p>sora · #6CB2C1</p></div>
+          <div class="swatch" data-type="visualization"><div class="swatch-block"><span class="code"><b>V</b><span>01</span></span><span lang="ja">緑</span></div><p><b>Visualization</b> <span lang="ja">可視化</span></p><p>midori · #3EB370</p></div>
+        </div>
+      </div>
+
+      <div class="tok-group">
+        <span class="flabel">Neutrals<span lang="ja">無彩色</span></span>
+        <div class="neutrals">
+          <div class="swatch" style="--sw: var(--paper); --sw-ink: var(--ink)"><div class="swatch-block"><span></span><span lang="ja">紙</span></div><p><b>Paper</b></p><p data-hex="--paper" data-name="kami"></p></div>
+          <div class="swatch" style="--sw: var(--cream); --sw-ink: var(--ink)"><div class="swatch-block"><span></span><span lang="ja">生成り</span></div><p><b>Cream</b></p><p data-hex="--cream" data-name="kinari"></p></div>
+          <div class="swatch" style="--sw: var(--taupe); --sw-ink: var(--ink)"><div class="swatch-block"><span></span><span lang="ja">灰茶</span></div><p><b>Taupe</b></p><p data-hex="--taupe" data-name="haicha"></p></div>
+          <div class="swatch" style="--sw: var(--ink); --sw-ink: var(--cream)"><div class="swatch-block"><span></span><span lang="ja">墨</span></div><p><b>Ink</b></p><p data-hex="--ink" data-name="sumi"></p></div>
+        </div>
+      </div>
+
+      <div class="tok-group">
+        <span class="flabel">Tiles<span lang="ja">記号 — every tile registered in design/tiles.js</span></span>
+        <div class="tileset" id="tileset"></div>
+        <div class="tile-lab">
+          <label>SEED <input id="lab-seed" value="kyoto-alley-blockout" spellcheck="false"></label>
+          <div class="mosaic" id="lab-mosaic"></div>
+          <p class="hint">Type any slug to see its mosaic. Add tiles with Tiles.define(...) or Tiles.family(...) in design/tiles.js and reload.</p>
+        </div>
+      </div>
+
+      <div class="tok-group">
+        <span class="flabel">Status stamps<span lang="ja">印</span></span>
+        <div class="stamps-row">
+          <figure><span class="stamp" data-stamp="seedling" data-size="120"></span><figcaption>SEEDLING<span lang="ja">苗 なえ</span></figcaption></figure>
+          <figure><span class="stamp" data-stamp="budding" data-size="120"></span><figcaption>BUDDING<span lang="ja">蕾 つぼみ</span></figcaption></figure>
+          <figure><span class="stamp" data-stamp="evergreen" data-size="120"></span><figcaption>EVERGREEN<span lang="ja">常緑 じょうりょく</span></figcaption></figure>
+        </div>
+      </div>
+
+      <div class="tok-group">
+        <span class="flabel">Type<span lang="ja">書体</span></span>
+        <div class="specimens">
+          <p><span class="spec-display">Kyoto alley</span><small>Display</small></p>
+          <p><span class="spec-ui">Behind the scenes: notes that grow into posts.</span><small>UI / body</small></p>
+          <p><span class="spec-jp" lang="ja">舞台裏：ノートが記事に育つまで。</span><small>Japanese</small></p>
+          <p><span class="spec-mono">notes/kyoto-alley-blockout/index.md</span><small>Mono</small></p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script src="tiles.js"></script>
+<script>
+// ---------- mosaics ----------
+const COLORS = {
+  ink: "var(--ink)", accent: "var(--accent)", taupe: "var(--taupe)", cream: "var(--cream)",
+  paper: "var(--paper)", t: "var(--t)", teal: "var(--teal)", vermilion: "var(--vermilion)",
+};
+
+document.querySelectorAll(".mosaic[data-seed]").forEach((el) => {
+  Tiles.mosaic(el, {
+    seed: el.dataset.seed,
+    cols: +el.dataset.cols,
+    rows: +el.dataset.rows,
+    tile: +el.dataset.tile,
+    density: +(el.dataset.density || 0.6),
+    anchor: el.dataset.ax ? [+el.dataset.ax, +el.dataset.ay] : undefined,
+    colors: el.dataset.colors.split(",").map((k) => COLORS[k]),
+  });
+});
+
+// ---------- tile gallery + lab ----------
+const showcase = ["var(--ink)", "var(--vermilion)", "var(--cream)", "var(--taupe)", "var(--teal)", "var(--orange)"];
+document.getElementById("tileset").innerHTML = Tiles.list()
+  .map((id, i) => {
+    const bg = showcase[i % showcase.length];
+    const fg = bg === "var(--ink)" ? "var(--cream)" : "var(--ink)";
+    return `<figure>${Tiles.svg(id, { bg, fg })}<figcaption>${id}</figcaption></figure>`;
+  })
+  .join("");
+
+const labSeed = document.getElementById("lab-seed");
+const labMosaic = document.getElementById("lab-mosaic");
+const drawLab = () =>
+  Tiles.mosaic(labMosaic, {
+    seed: labSeed.value || "blok",
+    cols: 24,
+    rows: 5,
+    tile: 24,
+    density: 0.85,
+    colors: ["var(--ink)", "var(--accent)", "var(--taupe)", "var(--paper)", "var(--vermilion)", "var(--teal)"],
+  });
+labSeed.addEventListener("input", drawLab);
+drawLab();
+
+// ---------- status stamps ----------
+const STATUS = {
+  seedling: { en: "SEEDLING", jp: "苗" },
+  budding: { en: "BUDDING", jp: "蕾" },
+  evergreen: { en: "EVERGREEN", jp: "常緑" },
+};
+let uid = 0;
+function stampSVG(status, size) {
+  const s = STATUS[status];
+  const ring = size >= 56;
+  const id = `ring-${uid++}`;
+  const kanjiSize = s.jp.length > 1 ? (ring ? 22 : 34) : (ring ? 34 : 52);
+  return `<svg viewBox="0 0 100 100" width="${size}" height="${size}" role="img" aria-label="${s.en.toLowerCase()}">
+    <circle class="stamp-bg" cx="50" cy="50" r="50"/>
+    ${ring ? `<path id="${id}" d="M 16 50 A 34 34 0 1 1 84 50 A 34 34 0 1 1 16 50" fill="none"/>
+    <text class="stamp-ring"><textPath href="#${id}" textLength="211" lengthAdjust="spacing">${s.en} • ${s.en} • </textPath></text>` : ""}
+    <text class="stamp-kanji" x="50" y="51" text-anchor="middle" dominant-baseline="central" lang="ja" style="font-size:${kanjiSize}px">${s.jp}</text>
+  </svg>`;
+}
+document.querySelectorAll("[data-stamp]").forEach((el) => {
+  el.innerHTML = stampSVG(el.dataset.stamp, +el.dataset.size || 48);
+});
+
+// ---------- neutral swatch labels follow the paper preset ----------
+function fillHex() {
+  const cs = getComputedStyle(document.documentElement);
+  document.querySelectorAll("[data-hex]").forEach((el) => {
+    el.textContent = `${el.dataset.name} · ${cs.getPropertyValue(el.dataset.hex).trim().toUpperCase()}`;
+  });
+}
+fillHex();
+
+// ---------- sketch controls ----------
+document.querySelectorAll("[data-var]").forEach((sel) => {
+  sel.addEventListener("change", () => document.documentElement.style.setProperty(sel.dataset.var, sel.value));
+});
+document.querySelectorAll("[data-attr]").forEach((sel) => {
+  sel.addEventListener("change", () => {
+    document.documentElement.dataset[sel.dataset.attr] = sel.value;
+    fillHex();
+  });
+});
+document.querySelectorAll("[data-hide]").forEach((box) => {
+  box.addEventListener("change", () => document.body.classList.toggle(box.dataset.hide, !box.checked));
+});
+</script>
+</body>
+</html>

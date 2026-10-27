@@ -1,0 +1,59 @@
+/*
+  blok design tokens.
+  Used by the design sketch now and by the app later, and meant to carry over to truls.dev.
+*/
+:root {
+  /* paper: warm (default) */
+  --page: #DCCFAF;
+  --paper: #F1E8D0;
+  --cream: #FBF6EA;
+  --panel: #E7DCC1;
+  --taupe: #A99C84;
+
+  /* ink */
+  --ink: #151413;
+  --ink-2: #3A362F;
+  --muted: #625B4D;
+  --grid: rgb(21 20 19 / 0.07);
+
+  /* lines: one colour per garden type */
+  --orange: #FFA947;
+  --vermilion: #EE4F2E;
+  --indigo: #2E4A87;
+  --teal: #6CB2C1;
+  --green: #3EB370;
+  --accent: var(--orange);
+
+  /* type */
+  --display-face: "Bebas Neue";
+  --latin-face: "IBM Plex Sans";
+  --jp-face: "IBM Plex Sans JP";
+  --display: var(--display-face), var(--jp-face), sans-serif;
+  --ui: var(--latin-face), var(--jp-face), sans-serif;
+  --jp: var(--jp-face), sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+/* paper presets, for comparing in the sketch */
+:root[data-paper="sand"] {
+  --page: #D3C29C;
+  --paper: #EBDDBA;
+  --cream: #F7EFDA;
+  --panel: #E0D0A8;
+  --taupe: #A39377;
+}
+
+:root[data-paper="original"] {
+  --page: #C9C1AA;
+  --paper: #E4DDC9;
+  --cream: #EEE9DB;
+  --panel: #D9D1BB;
+  --taupe: #A89D88;
+}
+
+/* garden type -> line colour (--t) and the ink that reads on it (--t-ink) */
+[data-type="writing"] { --t: var(--orange); --t-ink: var(--ink); }
+[data-type="art"] { --t: var(--vermilion); --t-ink: var(--ink); }
+[data-type="story"] { --t: var(--indigo); --t-ink: var(--cream); }
+[data-type="note"] { --t: var(--teal); --t-ink: var(--ink); }
+[data-type="visualization"] { --t: var(--green); --t-ink: var(--ink); }

@@ -1,0 +1,10 @@
+# Same line endings on Windows and Mac
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.avif binary
+*.webp binary
+*.woff binary
+*.woff2 binary
