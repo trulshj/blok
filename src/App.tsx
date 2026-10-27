@@ -4,9 +4,11 @@ import { api } from "./api.ts";
 import { TopBar } from "./components/TopBar.tsx";
 import { Home } from "./screens/Home.tsx";
 import { Setup } from "./screens/Setup.tsx";
+import { useServerEvents } from "./useServerEvents.ts";
 
 export function App() {
   const setup = useQuery({ queryKey: ["setup"], queryFn: () => api<SetupStatus>("/setup") });
+  useServerEvents();
 
   return (
     <div className="app">

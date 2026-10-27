@@ -283,6 +283,29 @@ code { font-size: .9em; overflow-wrap: anywhere; }
    ============================================================ */
 .placeholder { margin: 0; max-width: 72ch; font-size: 15px; line-height: 1.6; color: var(--ink-2); }
 
+.plain-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; max-width: 880px; background: var(--ink); border: 2px solid var(--ink); }
+.plain-list li {
+  display: grid;
+  grid-template-columns: 110px 1fr auto;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 14px;
+  background: var(--cream);
+  font-size: 15px;
+}
+.plain-list-type {
+  justify-self: start;
+  padding: 3px 8px;
+  background: var(--t);
+  color: var(--t-ink);
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.plain-list-title { font-weight: 600; }
+.plain-list code { color: var(--muted); font-size: 12px; }
+
 /* ============================================================
    RESPONSIVE
    ============================================================ */

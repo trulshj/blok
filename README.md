@@ -40,6 +40,8 @@ The server is plain TypeScript that Node 24 runs directly, so it has no build st
 ## Layout
 
 - `server/`: Hono API (config, setup, request guard)
+- `server/notes/`: the notes core: frontmatter, slugs, the note store (create, edit, rename, trash) and the
+  file watcher behind the live `/api/events` stream
 - `src/`: React UI
 - `shared/`: types used by both
 - `design/`: the design system: `tokens.css`, the tile generator `tiles.js`, and `sketch.html`

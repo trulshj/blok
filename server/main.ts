@@ -11,7 +11,8 @@ const serveClient = process.argv.includes("--serve-client");
 const root = resolve(import.meta.dirname, "..");
 process.chdir(root);
 
-const { app, getConfig } = createApp(root);
+const { app, getConfig, notes } = createApp(root, { watch: true });
+notes(); // start watching right away if the notes folder is set up
 
 if (serveClient) {
   app.use("/*", serveStatic({ root: "./dist" }));

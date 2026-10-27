@@ -1,14 +1,48 @@
 import { Hono } from "hono";
+import { streamSSE } from "hono/streaming";
 import { z } from "zod";
+import type { BlokEvent } from "../shared/types.ts";
 import { loadConfig, type Config } from "./config.ts";
+import { createHub } from "./events.ts";
 import { localOnly } from "./guard.ts";
+import { registerNoteRoutes, RequestError } from "./notes/routes.ts";
+import { createNoteStore, NoteError, type NoteStore } from "./notes/store.ts";
+import { watchNotes, type NotesWatcher } from "./notes/watch.ts";
 import { createNotesFolder, SetupError, SetupInput, setupStatus } from "./setup.ts";
 
-export function createApp(root: string) {
+const NOTE_ERROR_STATUS = { "invalid-slug": 400, "not-found": 404, exists: 409, conflict: 409, unreadable: 409 } as const;
+const HEARTBEAT_MS = 20_000;
+
+export function createApp(root: string, { watch = false } = {}) {
   let config: Config = loadConfig(root);
+  const hub = createHub();
   const app = new Hono();
 
+  // The store (and watcher) for the current notes folder, created once setup is done
+  // and replaced if the folder changes.
+  let runtime: { dir: string; store: NoteStore; watcher?: NotesWatcher } | null = null;
+  function notes(): NoteStore | null {
+    if (!setupStatus(config).ready) return null;
+    if (runtime?.dir !== config.notesDir) {
+      void runtime?.watcher?.close();
+      const store = createNoteStore(config.notesDir);
+      runtime = {
+        dir: config.notesDir,
+        store,
+        watcher: watch ? watchNotes(store.dir, (slugs) => hub.publish({ type: "notes", slugs })) : undefined,
+      };
+    }
+    return runtime.store;
+  }
+
   app.use("*", localOnly(() => config.port));
+
+  app.onError((err, c) => {
+    if (err instanceof NoteError) return c.json({ error: err.message, code: err.code }, NOTE_ERROR_STATUS[err.code]);
+    if (err instanceof RequestError) return c.json({ error: err.message }, err.status);
+    console.error(err);
+    return c.json({ error: err.message }, 500);
+  });
 
   app.get("/api/health", (c) => c.json({ ok: true }));
 
@@ -28,10 +62,40 @@ export function createApp(root: string) {
       const status = err instanceof SetupError ? 409 : 500;
       return c.json({ error: (err as Error).message }, status);
     }
+    notes(); // start watching the new folder
     return c.json(setupStatus(config));
   });
 
+  registerNoteRoutes(app, notes);
+
+  // live updates: one "notes" event per batch of changed note folders
+  app.get("/api/events", (c) =>
+    streamSSE(c, async (stream) => {
+      notes();
+      const send = (event: BlokEvent | { type: "ready" | "ping" }) =>
+        stream.writeSSE({ event: event.type, data: JSON.stringify(event) });
+
+      const unsubscribe = hub.subscribe((event) => void send(event));
+      const heartbeat = setInterval(() => void send({ type: "ping" }), HEARTBEAT_MS);
+      await send({ type: "ready" });
+
+      await new Promise<void>((done) =>
+        stream.onAbort(() => {
+          clearInterval(heartbeat);
+          unsubscribe();
+          done();
+        }),
+      );
+    }),
+  );
+
   app.all("/api/*", (c) => c.json({ error: "Not found" }, 404));
 
-  return { app, getConfig: () => config };
+  return {
+    app,
+    hub,
+    notes,
+    getConfig: () => config,
+    close: async () => runtime?.watcher?.close(),
+  };
 }
