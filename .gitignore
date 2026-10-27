@@ -1,0 +1,10 @@
+node_modules/
+dist/
+coverage/
+*.log
+.DS_Store
+
+# per-machine config (copy blok.config.example.json, or let the setup screen write it)
+blok.config.json
+
+.claude/settings.local.json

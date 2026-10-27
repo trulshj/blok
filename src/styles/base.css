@@ -1,0 +1,294 @@
+/* Base styles and shared pieces, carried over from design/sketch.html. Tokens come from design/tokens.css. */
+
+/* ============================================================
+   BASE
+   ============================================================ */
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input, select, textarea { font: inherit; color: inherit; }
+button { background: none; border: 0; padding: 0; cursor: pointer; border-radius: 0; }
+[lang="ja"] { font-family: var(--jp); }
+.mono, code { font-family: var(--mono); }
+code { font-size: .9em; overflow-wrap: anywhere; }
+
+.app {
+  min-height: 100vh;
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(to right, var(--grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.screen { padding: 44px 40px 64px; display: flex; flex-direction: column; gap: 36px; }
+.loading { padding: 44px 40px; font: 500 13px var(--mono); }
+
+/* ============================================================
+   SHARED PIECES
+   ============================================================ */
+.eyebrow {
+  margin: 0;
+  display: flex;
+  gap: 14px;
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1.45;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.eyebrow .dots { letter-spacing: .25em; white-space: nowrap; }
+.eyebrow [lang="ja"] { display: block; letter-spacing: .06em; }
+
+/* black name plates, hung off title blocks */
+.plate {
+  display: inline-flex;
+  align-items: center;
+  gap: .65em;
+  background: var(--ink);
+  color: var(--cream);
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1.1;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: 7px 12px 6px;
+  white-space: nowrap;
+}
+.plate [lang="ja"] { letter-spacing: .14em; font-weight: 700; }
+.plate--error {
+  align-self: flex-start;
+  margin: 0;
+  max-width: 72ch;
+  background: var(--vermilion);
+  color: var(--ink);
+  white-space: normal;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+/* staggered title on colour blocks. Each line is trimmed to cap height.
+   --rise: how far down the first line's block starts, as a fraction of the font size */
+:root { --rise: .2; }
+
+.block-title {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: .08em;
+  isolation: isolate;
+  font-family: var(--display);
+  font-size: var(--title-size, 64px);
+  font-weight: 400;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--block-ink, var(--ink));
+}
+.bt {
+  position: relative;
+  padding: 0 .14em 0 .2em;
+  white-space: nowrap;
+  text-box: trim-both cap alphabetic;
+}
+.bt::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -.09em 0;
+  background: var(--block, var(--accent));
+}
+.bt:first-child::before { top: calc(var(--rise) * 1em); }
+.bt + .bt { margin-left: .42em; }
+@supports not (text-box: trim-both cap alphabetic) {
+  .block-title { line-height: .8; gap: 0; }
+  .bt::before { inset: .06em 0 .02em; }
+}
+
+/* vertical Japanese slab */
+.slab-v {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ink);
+  color: var(--cream);
+  font-family: var(--jp);
+  font-weight: 700;
+  font-size: clamp(14px, calc(var(--title-size) * .11), 26px);
+  line-height: 1;
+  letter-spacing: .1em;
+  padding: 8px 10px;
+  /* one column of glyphs; set explicitly because browsers misjudge the width of vertical text inside a row */
+  width: calc(1em + 20px);
+  flex: none;
+}
+
+/* logo: B L O K on four tiles. --s is one tile */
+.logo {
+  --s: 20px;
+  display: inline-grid;
+  grid-template-columns: repeat(2, var(--s));
+  grid-auto-rows: var(--s);
+  gap: calc(var(--s) * .1);
+  flex: none;
+}
+.logo b {
+  display: block;
+  padding-top: calc(var(--s) * .184); /* centres the trimmed cap height (.7em of .9s) in the tile */
+  background: var(--accent);
+  color: var(--ink);
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: calc(var(--s) * .9);
+  line-height: 1;
+  text-align: center;
+  text-box: trim-both cap alphabetic;
+}
+.logo b:nth-child(2), .logo b:nth-child(3) { background: var(--ink); color: var(--cream); }
+.logo--strip { grid-template-columns: repeat(4, var(--s)); }
+.logo--strip b:nth-child(3) { background: var(--accent); color: var(--ink); }
+.logo--strip b:nth-child(4) { background: var(--ink); color: var(--cream); }
+
+/* labels */
+.flabel {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  font-weight: 700;
+  font-size: 11px;
+  line-height: 1.15;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.flabel [lang="ja"] { font-weight: 500; font-size: 10.5px; letter-spacing: .06em; color: var(--muted); text-transform: none; }
+
+.hint { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--muted); }
+
+/* form fields and buttons */
+.field {
+  width: 100%;
+  padding: 9px 11px;
+  background: var(--cream);
+  border: 2px solid var(--ink);
+  border-radius: 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.field:focus-visible { outline: 3px solid var(--accent); outline-offset: 0; }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 16px;
+  background: var(--ink);
+  color: var(--cream);
+  font-weight: 700;
+  font-size: 12.5px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.btn [lang="ja"] { letter-spacing: .06em; color: var(--panel); }
+.btn:hover:not(:disabled) { background: var(--accent); color: var(--ink); }
+.btn:hover:not(:disabled) [lang="ja"] { color: var(--ink); }
+.btn:disabled { opacity: .45; cursor: default; }
+.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* ============================================================
+   TOP BAR
+   ============================================================ */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 12px 24px;
+  background: var(--paper);
+  border-bottom: 2px solid var(--ink);
+}
+.wordmark { display: flex; align-items: center; gap: 12px; color: var(--ink); text-decoration: none; }
+.wm-name { display: flex; flex-direction: column; gap: 6px; }
+.wm-name .wm {
+  font-family: var(--display);
+  font-size: 32px;
+  line-height: 1;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  text-box: trim-both cap alphabetic;
+}
+.wm-name [lang="ja"] { font-weight: 700; font-size: 10.5px; line-height: 1; letter-spacing: .16em; }
+
+/* ============================================================
+   TITLE COMPOSITION (block title + slab + plates)
+   ============================================================ */
+.compose { position: relative; align-self: flex-start; padding: 30px 0; }
+.compose-row { display: flex; align-items: stretch; gap: 10px; }
+/* physical margins: in vertical text, margin-block would mean left/right. The slab spans the colour block */
+.compose-row .slab-v {
+  margin-top: calc(var(--title-size) * var(--rise));
+  margin-bottom: calc(var(--title-size) * -.09);
+}
+.compose .plate { position: absolute; z-index: 2; }
+.compose .plate--tl { top: 0; left: -10px; }
+.compose .plate--br { bottom: 0; right: 54px; }
+
+.hero { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 24px 40px; }
+
+/* ============================================================
+   SETUP
+   ============================================================ */
+.checks { display: grid; gap: 2px; max-width: 880px; background: var(--ink); border: 2px solid var(--ink); }
+.check {
+  display: grid;
+  grid-template-columns: 40px 170px 1fr;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px 12px 12px;
+  background: var(--cream);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.check-mark {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  font-weight: 700;
+  font-size: 17px;
+}
+.check[data-state="ok"] .check-mark { background: var(--green); color: var(--ink); }
+.check[data-state="todo"] .check-mark { background: var(--vermilion); color: var(--ink); }
+.check[data-state="optional"] .check-mark { background: var(--taupe); color: var(--ink); }
+.check-detail { color: var(--ink-2); }
+
+.setup-form { display: flex; flex-direction: column; gap: 14px; max-width: 880px; }
+.field-group { display: flex; flex-direction: column; gap: 8px; }
+.checkbox { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+.checkbox input { width: 18px; height: 18px; accent-color: var(--ink); }
+.checkbox .mono { font-size: 12px; color: var(--muted); }
+.actions { display: flex; gap: 12px; margin-top: 6px; }
+
+/* ============================================================
+   HOME (placeholder)
+   ============================================================ */
+.placeholder { margin: 0; max-width: 72ch; font-size: 15px; line-height: 1.6; color: var(--ink-2); }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 760px) {
+  .screen { padding: 32px 16px 48px; }
+  .compose { --title-size: 110px !important; }
+  .check { grid-template-columns: 32px 1fr; }
+  .check-detail { grid-column: 1 / -1; }
+}
