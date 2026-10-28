@@ -174,6 +174,40 @@ describe("trash", () => {
   });
 });
 
+describe("files in a note's folder", () => {
+  const IMAGE = /^[a-z0-9][a-z0-9._-]*\.(avif|png)$/i;
+  const bytes = new Uint8Array([1, 2, 3]);
+
+  it("adds files under free names and lists them", async () => {
+    await store.create({ title: "Kyoto" });
+    expect(await store.addFile("kyoto", "render", "avif", bytes)).toBe("render.avif");
+    expect(await store.addFile("kyoto", "render", "avif", bytes)).toBe("render-2.avif");
+
+    expect(await store.listFiles("kyoto", IMAGE)).toEqual([
+      { file: "render-2.avif", bytes: 3 },
+      { file: "render.avif", bytes: 3 },
+    ]);
+  });
+
+  it("won't add files to a note that doesn't exist", async () => {
+    await expectNoteError(store.addFile("nope", "x", "avif", bytes), "not-found");
+    expect(existsSync(join(notesDir, "notes", "nope"))).toBe(false);
+  });
+
+  it.each(["../escape.avif", "a/b.avif", "..\\b.avif", ".hidden.avif", "index.md", "has space.avif"])(
+    "filePath refuses %j",
+    async (file) => {
+      await store.create({ title: "Kyoto" });
+      expect(() => store.filePath("kyoto", file, IMAGE)).toThrow(NoteError);
+    },
+  );
+
+  it("filePath resolves plain names inside the folder", async () => {
+    await store.create({ title: "Kyoto" });
+    expect(store.filePath("kyoto", "render-01.avif", IMAGE)).toBe(join(notesDir, "notes", "kyoto", "render-01.avif"));
+  });
+});
+
 it("runs concurrent writes one at a time", async () => {
   const note = await store.create({ title: "Busy" });
   await Promise.all(

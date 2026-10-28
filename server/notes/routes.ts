@@ -1,7 +1,11 @@
 import type { Context, Hono } from "hono";
+import { bodyLimit } from "hono/body-limit";
+import { readFile, stat } from "node:fs/promises";
 import { z } from "zod";
-import { NOTE_LANGS, NOTE_STATUSES, NOTE_TYPES } from "../../shared/types.ts";
+import { slugify } from "../../shared/slug.ts";
+import { NOTE_LANGS, NOTE_STATUSES, NOTE_TYPES, type NoteImage, type UploadedImage } from "../../shared/types.ts";
 import type { Catalog } from "./catalog.ts";
+import { altFromName, IMAGE_FILE, IMAGE_TYPES, imageSize, MAX_UPLOAD_BYTES, toAvif } from "./images.ts";
 import type { NoteStore } from "./store.ts";
 
 export class RequestError extends Error {
@@ -83,5 +87,77 @@ export function registerNoteRoutes(app: Hono, runtime: () => { store: NoteStore;
     const result = await store.trash(slug);
     await catalog.refresh([slug]);
     return c.json(result);
+  });
+
+  // ---------- images in a note's folder ----------
+
+  app.get("/api/notes/:slug/images", async (c) => {
+    const { store } = notes();
+    const slug = c.req.param("slug");
+    const files = await store.listFiles(slug, IMAGE_FILE);
+    const images: NoteImage[] = await Promise.all(
+      files.map(async ({ file, bytes }) => ({
+        file,
+        src: `./${file}`,
+        bytes,
+        ...(await imageSize(store.filePath(slug, file, IMAGE_FILE))),
+      })),
+    );
+    return c.json({ images });
+  });
+
+  // one image per request, sent as multipart form field "file"; converted to AVIF
+  app.post(
+    "/api/notes/:slug/images",
+    bodyLimit({
+      maxSize: MAX_UPLOAD_BYTES,
+      onError: (c) => c.json({ error: `Images can be at most ${MAX_UPLOAD_BYTES / 1024 / 1024} MB` }, 413),
+    }),
+    async (c) => {
+      const { store } = notes();
+      const slug = c.req.param("slug");
+      const form = await c.req.parseBody().catch(() => ({}) as Record<string, unknown>);
+      const file = form.file;
+      if (!(file instanceof File)) throw new RequestError(400, 'Send the image as a form field called "file"');
+
+      const { data, width, height } = await toAvif(new Uint8Array(await file.arrayBuffer()));
+      const base = slugify(file.name.replace(/\.[^.]+$/, ""), new Date(), "image");
+      const name = await store.addFile(slug, base, "avif", data);
+      const image: UploadedImage = {
+        file: name,
+        src: `./${name}`,
+        width,
+        height,
+        bytes: data.length,
+        markdown: `![${altFromName(file.name)}](./${name})`,
+      };
+      return c.json(image, 201);
+    },
+  );
+
+  // the image files themselves, for previews and covers: /files/<slug>/<file>
+  app.get("/files/:slug/:file", async (c) => {
+    const { store } = notes();
+    const path = store.filePath(c.req.param("slug"), c.req.param("file"), IMAGE_FILE);
+    let info;
+    try {
+      info = await stat(path);
+    } catch {
+      return c.json({ error: "Not found" }, 404);
+    }
+
+    const etag = `"${info.size.toString(16)}-${Math.round(info.mtimeMs).toString(16)}"`;
+    const ext = path.slice(path.lastIndexOf(".") + 1).toLowerCase();
+    const headers: Record<string, string> = {
+      "content-type": IMAGE_TYPES[ext] ?? "application/octet-stream",
+      "cache-control": "no-cache",
+      etag,
+      "x-content-type-options": "nosniff",
+    };
+    // an SVG opened directly runs in blok's origin; don't let it run scripts or load anything
+    if (ext === "svg") headers["content-security-policy"] = "default-src 'none'; style-src 'unsafe-inline'";
+
+    if (c.req.header("if-none-match") === etag) return c.body(null, 304, headers);
+    return c.body(new Uint8Array(await readFile(path)), 200, headers);
   });
 }

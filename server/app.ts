@@ -6,12 +6,20 @@ import { loadConfig, type Config } from "./config.ts";
 import { createHub } from "./events.ts";
 import { localOnly } from "./guard.ts";
 import { createCatalog, type Catalog } from "./notes/catalog.ts";
+import { ImageError } from "./notes/images.ts";
 import { registerNoteRoutes, RequestError } from "./notes/routes.ts";
 import { createNoteStore, NoteError, type NoteStore } from "./notes/store.ts";
 import { watchNotes, type NotesWatcher } from "./notes/watch.ts";
 import { createNotesFolder, SetupError, SetupInput, setupStatus } from "./setup.ts";
 
-const NOTE_ERROR_STATUS = { "invalid-slug": 400, "not-found": 404, exists: 409, conflict: 409, unreadable: 409 } as const;
+const NOTE_ERROR_STATUS = {
+  "invalid-slug": 400,
+  "invalid-file": 400,
+  "not-found": 404,
+  exists: 409,
+  conflict: 409,
+  unreadable: 409,
+} as const;
 const HEARTBEAT_MS = 20_000;
 
 export function createApp(root: string, { watch = false } = {}) {
@@ -43,6 +51,7 @@ export function createApp(root: string, { watch = false } = {}) {
   app.onError((err, c) => {
     if (err instanceof NoteError) return c.json({ error: err.message, code: err.code }, NOTE_ERROR_STATUS[err.code]);
     if (err instanceof RequestError) return c.json({ error: err.message }, err.status);
+    if (err instanceof ImageError) return c.json({ error: err.message }, 422);
     console.error(err);
     return c.json({ error: err.message }, 500);
   });
@@ -93,6 +102,7 @@ export function createApp(root: string, { watch = false } = {}) {
   );
 
   app.all("/api/*", (c) => c.json({ error: "Not found" }, 404));
+  app.all("/files/*", (c) => c.json({ error: "Not found" }, 404));
 
   return {
     app,

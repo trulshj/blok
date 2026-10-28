@@ -14,15 +14,16 @@ export function isValidSlug(slug: string): boolean {
 
 /**
  * "Hva er visualisering?" → "hva-er-visualisering", "Ærlig" → "aerlig".
- * Japanese characters are dropped; a title with nothing left falls back to note-YYYYMMDD-HHmm.
+ * Japanese characters are dropped; a title with nothing left falls back to note-YYYYMMDD-HHmm
+ * (or another `fallback` prefix, e.g. "image" for file names).
  */
-export function slugify(title: string, when: Date): string {
+export function slugify(title: string, when: Date, fallback = "note"): string {
   const ascii = foldLatin(title.toLowerCase())
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
   const slug = trimToLength(ascii);
-  return slug || `note-${stamp(when, "minutes")}`;
+  return slug || `${fallback}-${stamp(when, "minutes")}`;
 }
 
 /** Lowercase Latin text to plain ASCII letters: "ærlig" → "aerlig", "pontochō" → "pontocho". */

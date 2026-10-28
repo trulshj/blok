@@ -1,18 +1,19 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import type { Note } from "../../shared/types.ts";
-import { api } from "../api.ts";
+import { api, uploadImage } from "../api.ts";
 import { CodeBadge } from "../components/CodeBadge.tsx";
 import { MetaPanel } from "../components/MetaPanel.tsx";
 import { Mosaic } from "../components/Mosaic.tsx";
 import { Stamp } from "../components/Stamp.tsx";
 import { StatusLine } from "../components/StatusLine.tsx";
 import { TitleBlock } from "../components/TitleBlock.tsx";
-import { Editor, type EditorHandle } from "../editor/Editor.tsx";
+import { Editor, type EditorHandle, type UploadState } from "../editor/Editor.tsx";
 import { useNoteDraft } from "../editor/useNoteDraft.ts";
 import { stationCodes } from "../lib/codes.ts";
 import { splitTitle, titleSize } from "../lib/format.ts";
+import { imageFiles } from "../lib/images.ts";
 import { TYPE_LABELS } from "../lib/labels.ts";
 import { useNote, useNotes } from "../queries.ts";
 
@@ -50,6 +51,13 @@ function NoteEditor({ note }: { note: Note }) {
   const code = useMemo(() => stationCodes(notes.data ?? []).get(note.slug), [notes.data, note.slug]);
   const queryClient = useQueryClient();
   const [, navigate] = useLocation();
+  const [uploads, setUploads] = useState<UploadState>({ pending: 0, error: null });
+
+  const upload = async (file: File) => {
+    const image = await uploadImage(note.slug, file);
+    void queryClient.invalidateQueries({ queryKey: ["images", note.slug] });
+    return image;
+  };
 
   // Ctrl/⌘+S saves right away, wherever the focus is
   const { saveNow } = draft;
@@ -150,10 +158,20 @@ function NoteEditor({ note }: { note: Note }) {
           <Editor
             ref={editor}
             initialDoc={note.body}
+            slug={note.slug}
             lang={meta.lang}
             label={`Text of ${meta.title || "the note"}`}
             onChange={draft.setBody}
+            uploadImage={upload}
+            onUploads={setUploads}
           />
+
+          {uploads.error && (
+            <p className="plate plate--error">
+              Couldn't add {uploads.error}
+            </p>
+          )}
+          <ImageDrop onFiles={(files) => editor.current?.addImages(files)} />
         </div>
 
         <MetaPanel
@@ -167,7 +185,54 @@ function NoteEditor({ note }: { note: Note }) {
         />
       </div>
 
-      <StatusLine status={draft.status} stats={draft.stats} slug={note.slug} onRetry={() => void draft.saveNow()} />
+      <StatusLine
+        status={draft.status}
+        stats={draft.stats}
+        slug={note.slug}
+        converting={uploads.pending}
+        onRetry={() => void draft.saveNow()}
+      />
     </main>
+  );
+}
+
+/** "Drop renders here" below the editor: a drop target that's also a button for picking files. */
+function ImageDrop({ onFiles }: { onFiles: (files: File[]) => void }) {
+  const input = useRef<HTMLInputElement>(null);
+  const [over, setOver] = useState(false);
+
+  return (
+    <>
+      <button
+        type="button"
+        className={over ? "dropzone is-over" : "dropzone"}
+        onClick={() => input.current?.click()}
+        onDragOver={(e) => {
+          if (![...e.dataTransfer.types].includes("Files")) return;
+          e.preventDefault();
+          setOver(true);
+        }}
+        onDragLeave={() => setOver(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setOver(false);
+          onFiles(imageFiles(e.dataTransfer));
+        }}
+      >
+        Drop renders here, or click to pick<span lang="ja">ここに画像をドロップ</span>
+        <span className="mono">PNG · JPG · WebP → AVIF</span>
+      </button>
+      <input
+        ref={input}
+        type="file"
+        accept="image/*"
+        multiple
+        hidden
+        onChange={(e) => {
+          onFiles([...(e.target.files ?? [])]);
+          e.target.value = "";
+        }}
+      />
+    </>
   );
 }

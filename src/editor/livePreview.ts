@@ -1,12 +1,96 @@
 import { HighlightStyle, syntaxTree } from "@codemirror/language";
-import type { EditorState, Range } from "@codemirror/state";
-import { Decoration, ViewPlugin, type DecorationSet, type EditorView, type ViewUpdate } from "@codemirror/view";
+import { Facet, type EditorState, type Range } from "@codemirror/state";
+import { Decoration, ViewPlugin, WidgetType, type DecorationSet, type EditorView, type ViewUpdate } from "@codemirror/view";
 import { tags } from "@lezer/highlight";
+import type { SyntaxNode } from "@lezer/common";
+import { imageUrl } from "../lib/images.ts";
+
+/** The slug of the note being edited, so image previews can find files in its folder. */
+export const noteSlug = Facet.define<string, string>({ combine: (values) => values[0] ?? "" });
+
+/** Markdown images like ![alt](./render-01.avif) shown as the image itself, with a caption. */
+export class ImageWidget extends WidgetType {
+  src: string;
+  alt: string;
+  slug: string;
+
+  constructor(src: string, alt: string, slug: string) {
+    super();
+    this.src = src;
+    this.alt = alt;
+    this.slug = slug;
+  }
+
+  eq(other: ImageWidget) {
+    return other.src === this.src && other.alt === this.alt && other.slug === this.slug;
+  }
+
+  get estimatedHeight() {
+    return 320;
+  }
+
+  toDOM(view: EditorView) {
+    const figure = document.createElement("span");
+    figure.className = "md-image";
+    const caption = document.createElement("span");
+    caption.className = "md-image-caption";
+    const name = this.src.split("/").pop() ?? this.src;
+
+    // placeholder while an upload converts: ![Converting render-01.png…](uploading-<id>)
+    if (this.src.startsWith("uploading-")) {
+      figure.classList.add("md-image--pending");
+      caption.textContent = this.alt;
+      figure.append(caption);
+      return figure;
+    }
+
+    const url = imageUrl(this.slug, this.src);
+    if (!url) {
+      figure.classList.add("md-image--missing");
+      caption.textContent = `${this.src} can't be shown in blok`;
+      figure.append(caption);
+      return figure;
+    }
+
+    const img = document.createElement("img");
+    img.alt = this.alt;
+    img.decoding = "async";
+    img.onload = () => {
+      caption.textContent = `${name} · ${img.naturalWidth} × ${img.naturalHeight}`;
+      view.requestMeasure();
+    };
+    img.onerror = () => {
+      figure.classList.add("md-image--missing");
+      caption.textContent = `Image not found: ${this.src}`;
+      view.requestMeasure();
+    };
+    img.src = url;
+    caption.textContent = name;
+    figure.append(img, caption);
+    return figure;
+  }
+
+  // let clicks through, so clicking an image puts the cursor there and shows its markdown
+  ignoreEvent() {
+    return false;
+  }
+}
+
+/** The alt text and URL of an Image node: ![alt](url). */
+function readImage(state: EditorState, node: SyntaxNode): { alt: string; src: string } | null {
+  const marks = node.getChildren("LinkMark");
+  const url = node.getChild("URL");
+  const open = marks[0];
+  const close = marks[1];
+  if (!open || !close || !url) return null;
+  return { alt: state.doc.sliceString(open.to, close.from), src: state.doc.sliceString(url.from, url.to) };
+}
 
 /**
  * Live styling for markdown: headings, emphasis, code and links are styled by the highlighter below,
- * and their markup (##, **, `, [..](..)) is hidden on every line except the one being edited.
- * The edited line always shows its raw text, so typing, including with a Japanese IME, is never disturbed.
+ * their markup (##, **, `, [..](..)) is hidden, and images show as pictures, on every line except the
+ * one being edited. The edited line always shows its raw text, so typing, including with a Japanese
+ * IME, is never disturbed.
  */
 
 export const markdownStyle = HighlightStyle.define([
@@ -84,7 +168,14 @@ export function liveDecorations(
           }
         }
 
-        if (node.name === "Image") return false; // shown as written until image previews arrive
+        if (node.name === "Image") {
+          const image = !isEdited(node.from) && readImage(state, node.node);
+          if (image) {
+            const widget = new ImageWidget(image.src, image.alt, state.facet(noteSlug));
+            decorations.push(Decoration.replace({ widget }).range(node.from, node.to));
+          }
+          return false;
+        }
 
         if (node.name === "HeaderMark" && !isEdited(node.from)) {
           // "## Title": hide the hashes and the space after them

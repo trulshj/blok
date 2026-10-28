@@ -3,7 +3,9 @@ import { slugify } from "../../shared/slug.ts";
 import { NOTE_LANGS, NOTE_STATUSES, NOTE_TYPES, type NoteMeta, type NoteMetaInput } from "../../shared/types.ts";
 import type { StationCode } from "../lib/codes.ts";
 import { dateTime } from "../lib/format.ts";
+import { formatBytes, imageUrl } from "../lib/images.ts";
 import { LANG_LABELS, STATUS_LABELS, TYPE_LABELS } from "../lib/labels.ts";
+import { useNoteImages } from "../queries.ts";
 import { Stamp } from "./Stamp.tsx";
 import { TagInput } from "./TagInput.tsx";
 
@@ -16,6 +18,67 @@ type Props = {
   onRename: () => Promise<void>;
   onTrash: () => Promise<void>;
 };
+
+/** Pick the cover from the images in the note's folder, plus alt text for it. */
+function CoverPicker({
+  slug,
+  image,
+  onChange,
+}: {
+  slug: string;
+  image: NoteMeta["image"];
+  onChange: (image: NoteMeta["image"]) => void;
+}) {
+  const images = useNoteImages(slug).data ?? [];
+  const inFolder = images.some((img) => img.src === image?.src);
+
+  return (
+    <div className="meta-sec">
+      <span className="flabel">
+        Cover<span lang="ja">表紙</span>
+      </span>
+      {images.length === 0 && !image ? (
+        <span className="hint">Add images to the note to pick a cover.</span>
+      ) : (
+        <div className="cover-grid" role="group" aria-label="Cover image">
+          <button
+            type="button"
+            className={!image ? "cover-opt cover-opt--none is-on" : "cover-opt cover-opt--none"}
+            aria-pressed={!image}
+            onClick={() => onChange(undefined)}
+          >
+            None
+          </button>
+          {images.map((img) => {
+            const on = img.src === image?.src;
+            return (
+              <button
+                key={img.file}
+                type="button"
+                className={on ? "cover-opt is-on" : "cover-opt"}
+                aria-pressed={on}
+                title={`${img.file} · ${img.width} × ${img.height} · ${formatBytes(img.bytes)}`}
+                onClick={() => onChange({ src: img.src, alt: image?.alt ?? "" })}
+              >
+                <img src={imageUrl(slug, img.src) ?? ""} alt={img.file} loading="lazy" />
+              </button>
+            );
+          })}
+        </div>
+      )}
+      {image && !inFolder && <span className="hint">Current cover: {image.src}</span>}
+      {image && (
+        <input
+          className="field"
+          value={image.alt}
+          placeholder="Describe the cover for screen readers"
+          aria-label="Cover description"
+          onChange={(e) => onChange({ ...image, alt: e.target.value })}
+        />
+      )}
+    </div>
+  );
+}
 
 /** The note's details, edited in place and autosaved with the text. */
 export function MetaPanel({ slug, meta, dates, code, onChange, onRename, onTrash }: Props) {
@@ -142,6 +205,8 @@ export function MetaPanel({ slug, meta, dates, code, onChange, onRename, onTrash
           onChange={(e) => onChange({ excerpt: e.target.value })}
         />
       </label>
+
+      <CoverPicker slug={slug} image={meta.image} onChange={(image) => onChange({ image })} />
 
       <dl className="dates">
         {code && (

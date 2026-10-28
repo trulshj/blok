@@ -12,7 +12,7 @@ import { isValidSlug, slugify, stamp, uniqueSlug } from "../../shared/slug.ts";
 export const NOTE_FILE = "index.md";
 export const TRASH_DIR = ".trash";
 
-export type NoteErrorCode = "invalid-slug" | "not-found" | "exists" | "conflict" | "unreadable";
+export type NoteErrorCode = "invalid-slug" | "invalid-file" | "not-found" | "exists" | "conflict" | "unreadable";
 
 export class NoteError extends Error {
   code: NoteErrorCode;
@@ -179,6 +179,40 @@ export function createNoteStore(notesDir: string, { now = () => new Date() } = {
       });
     },
 
+    /** Saves `data` in the note's folder as `<base>.<ext>`, or `<base>-2.<ext>`… if taken. Returns the file name. */
+    addFile(slug: string, base: string, ext: string, data: Uint8Array): Promise<string> {
+      return exclusive(async () => {
+        const path = folder(slug);
+        if (!existsSync(join(path, NOTE_FILE))) throw new NoteError("not-found", `No note called "${slug}"`);
+        const name = `${uniqueSlug(base, (s) => existsSync(join(path, `${s}.${ext}`)))}.${ext}`;
+        await writeAtomic(join(path, name), data);
+        return name;
+      });
+    },
+
+    /** Path of `file` in the note's folder. Only plain names matching `pattern`, nothing outside the folder. */
+    filePath(slug: string, file: string, pattern: RegExp): string {
+      const path = resolve(folder(slug), file);
+      if (!pattern.test(file) || dirname(path) !== folder(slug)) {
+        throw new NoteError("invalid-file", `"${file}" isn't a file blok can show`);
+      }
+      return path;
+    },
+
+    /** Files in the note's folder matching `pattern`, by name. */
+    async listFiles(slug: string, pattern: RegExp): Promise<{ file: string; bytes: number }[]> {
+      const path = folder(slug);
+      let entries;
+      try {
+        entries = await readdir(path, { withFileTypes: true });
+      } catch (err) {
+        if ((err as NodeJS.ErrnoException).code === "ENOENT") throw new NoteError("not-found", `No note called "${slug}"`);
+        throw err;
+      }
+      const files = entries.filter((e) => e.isFile() && pattern.test(e.name)).map((e) => e.name).sort();
+      return Promise.all(files.map(async (file) => ({ file, bytes: (await stat(join(path, file))).size })));
+    },
+
     /** Moves the note folder to notes/.trash/. Never deletes anything. */
     trash(slug: string): Promise<{ trashedAs: string }> {
       return exclusive(async () => {
@@ -193,8 +227,8 @@ export function createNoteStore(notesDir: string, { now = () => new Date() } = {
   };
 }
 
-/** Write to a temp file, then rename over the target, so a crash never leaves half a note. */
-async function writeAtomic(file: string, content: string): Promise<void> {
+/** Write to a temp file, then rename over the target, so a crash never leaves half a file. */
+async function writeAtomic(file: string, content: string | Uint8Array): Promise<void> {
   const temp = `${file}.${randomUUID().slice(0, 8)}.tmp`;
   await writeFile(temp, content);
   try {

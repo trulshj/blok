@@ -23,6 +23,9 @@ git repository. By default it's `../blok-notes`, next to this checkout.
 - If a note changes on disk while you have unsaved edits (a `git pull`, say), blok asks whether to keep
   your version or load the one on disk. It never overwrites either one silently.
 - Deleting moves a note to `notes/.trash/`.
+- Drop or paste images into a note (or use the drop area under the text). They're converted to AVIF, at
+  most 2400px wide, without the original metadata (no GPS from phone photos), and saved next to the note.
+  Pick a cover in the details panel.
 
 ## Config
 

@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import type { NoteSummary } from "../../shared/types.ts";
 import type { StationCode } from "../lib/codes.ts";
 import { relativeTime, splitTitle, titleSize } from "../lib/format.ts";
+import { imageUrl } from "../lib/images.ts";
 import { LANG_LABELS, TYPE_LABELS } from "../lib/labels.ts";
 import { CodeBadge } from "./CodeBadge.tsx";
 import { Mosaic } from "./Mosaic.tsx";
@@ -22,6 +23,7 @@ export function NoteCard({ note, code, feature = false, activeTag, onTag }: Prop
   const type = TYPE_LABELS[meta.type];
   const href = `/notes/${note.slug}`;
   const lines = splitTitle(meta.title);
+  const cover = meta.image ? imageUrl(note.slug, meta.image.src) : null;
 
   return (
     <article className={feature ? "card card--feature" : "card"} data-type={meta.type}>
@@ -43,8 +45,14 @@ export function NoteCard({ note, code, feature = false, activeTag, onTag }: Prop
         {!feature && <Mosaic seed={note.slug} cols={4} rows={2} tile={11} density={0.95} colors={["ink", "t", "taupe", "paper"]} />}
       </header>
 
-      {/* the note's own tile pattern stands in as the cover until notes have images */}
-      {feature && (
+      {/* the cover image, or the note's own tile pattern when it has none */}
+      {feature && cover && (
+        <figure className="card-cover-figure">
+          <img className="card-cover-img" src={cover} alt={meta.image?.alt ?? ""} loading="lazy" />
+          <span className="plate">{meta.image?.src.replace(/^\.\//, "")}</span>
+        </figure>
+      )}
+      {feature && !cover && (
         <Mosaic
           className="card-cover"
           seed={note.slug}

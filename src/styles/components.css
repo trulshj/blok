@@ -213,6 +213,9 @@ kbd { font: 500 11px var(--mono); padding: 2px 5px; border: 1px solid var(--ink)
 .card--feature .card-head { padding-right: 76px; }
 .card--feature .card-excerpt { font-size: 15px; -webkit-line-clamp: 6; }
 .card-cover { max-width: 100%; overflow: hidden; margin: 6px 0 4px; }
+.card-cover-figure { position: relative; margin: 6px 0 4px; }
+.card-cover-img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; background: var(--ink); }
+.card-cover-figure .plate { position: absolute; left: 0; bottom: 0; font: 500 11px var(--mono); letter-spacing: 0; text-transform: none; }
 .card-block-title { --block: var(--t); --block-ink: var(--t-ink); margin: 18px 0 6px; }
 .card-block-title .card-link { display: flex; flex-direction: column; align-items: flex-start; gap: .08em; }
 

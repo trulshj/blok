@@ -13,11 +13,13 @@ type Props = {
   status: SaveStatus;
   stats: { words: number; cjk: number };
   slug: string;
+  /** Images still being converted. */
+  converting: number;
   onRetry: () => void;
 };
 
-/** Save state, word count and file path along the bottom of the note screen. */
-export function StatusLine({ status, stats, slug, onRetry }: Props) {
+/** Save state, image conversions, word count and file path along the bottom of the note screen. */
+export function StatusLine({ status, stats, slug, converting, onRetry }: Props) {
   const text = TEXT[status.state];
   const time =
     status.state === "saved" ? new Date(status.at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) : null;
@@ -34,6 +36,12 @@ export function StatusLine({ status, stats, slug, onRetry }: Props) {
         <button type="button" className="link-btn" onClick={onRetry}>
           Retry
         </button>
+      )}
+      {converting > 0 && (
+        <span className="save-state" data-state="saving">
+          <i className="save-dot" aria-hidden="true" />
+          Converting {converting} {converting === 1 ? "image" : "images"} <span lang="ja">変換中</span>
+        </span>
       )}
       <span>
         {stats.words} {stats.words === 1 ? "word" : "words"}

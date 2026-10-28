@@ -1,7 +1,7 @@
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import { EditorSelection, EditorState } from "@codemirror/state";
 import { describe, expect, it } from "vitest";
-import { liveDecorations } from "./livePreview.ts";
+import { ImageWidget, liveDecorations, noteSlug } from "./livePreview.ts";
 
 /** The text hidden by the live preview, and the line classes, for `doc` with the cursor at `cursor`. */
 function render(doc: string, { cursor = doc.length, focused = true } = {}) {
@@ -57,8 +57,20 @@ describe("liveDecorations", () => {
     expect(render("## Next\n**Roof**", { focused: false }).hidden).toEqual(["## ", "**", "**"]);
   });
 
-  it("leaves images as written for now", () => {
-    expect(render(withEnd("![first pass](./render-01.avif)")).hidden).toEqual([]);
+  it("shows images as pictures off the edited line, and as markdown on it", () => {
+    const doc = "![first pass](./render-01.avif)";
+    const state = EditorState.create({
+      doc: withEnd(doc),
+      selection: EditorSelection.cursor(doc.length + 2),
+      extensions: [markdown({ base: markdownLanguage }), noteSlug.of("kyoto-alley")],
+    });
+    const widgets: ImageWidget[] = [];
+    liveDecorations(state).between(0, doc.length, (_from, _to, deco) => {
+      if (deco.spec.widget instanceof ImageWidget) widgets.push(deco.spec.widget);
+    });
+    expect(widgets).toMatchObject([{ src: "./render-01.avif", alt: "first pass", slug: "kyoto-alley" }]);
+
+    expect(render(doc).hidden).toEqual([]); // cursor on the image line: raw markdown
   });
 
   it("doesn't touch Japanese text or list markers", () => {

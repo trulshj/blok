@@ -69,6 +69,12 @@ export type Note = NoteSummary & { body: string };
 
 export type SearchResult = { slug: string; score: number };
 
+/** An image in a note's folder. `src` is how markdown links it: "./render-01.avif". */
+export type NoteImage = { file: string; src: string; width: number; height: number; bytes: number };
+
+/** A freshly uploaded image, with markdown ready to insert. */
+export type UploadedImage = NoteImage & { markdown: string };
+
 export type CreateNoteRequest = Partial<NoteMetaInput> & { title: string; body?: string };
 
 export type UpdateNoteRequest = {

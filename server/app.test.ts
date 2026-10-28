@@ -1,3 +1,6 @@
+import { writeFileSync } from "node:fs";
+import { join } from "node:path";
+import sharp from "sharp";
 import { afterEach, describe, expect, it } from "vitest";
 import type { Note, SetupStatus } from "../shared/types.ts";
 import { createApp } from "./app.ts";
@@ -152,6 +155,96 @@ describe("/api/notes", () => {
     const stale = await save(note.meta.updated);
     expect(stale.status).toBe(409);
     expect(await stale.json()).toMatchObject({ code: "conflict" });
+  });
+});
+
+describe("images", () => {
+  const ORIGIN = { host: HOST, origin: `http://${HOST}` };
+
+  async function withNote() {
+    checkout = tempCheckout();
+    const { app } = createApp(checkout.root);
+    await app.request("/api/setup", post({ notesDir: "../notes", gitInit: false }));
+    await app.request("/api/notes", post({ title: "Kyoto alley" }));
+    return app;
+  }
+
+  async function upload(app: ReturnType<typeof createApp>["app"], file: Blob, name: string, headers: Record<string, string> = ORIGIN) {
+    const form = new FormData();
+    form.append("file", file, name);
+    return app.request("/api/notes/kyoto-alley/images", { method: "POST", headers, body: form });
+  }
+
+  const png = async () =>
+    new Blob([
+      new Uint8Array(
+        await sharp({ create: { width: 3000, height: 1500, channels: 3, background: "#2E4A87" } })
+          .png()
+          .toBuffer(),
+      ),
+    ]);
+
+  it("converts an upload to AVIF, lists it and serves it", async () => {
+    const app = await withNote();
+    const res = await upload(app, await png(), "Render 01.png");
+    expect(res.status).toBe(201);
+    expect(await res.json()).toMatchObject({
+      file: "render-01.avif",
+      src: "./render-01.avif",
+      width: 2400,
+      height: 1200,
+      markdown: "![Render 01](./render-01.avif)",
+    });
+
+    const list = (await (await app.request("/api/notes/kyoto-alley/images", { headers: { host: HOST } })).json()) as {
+      images: { file: string; width: number }[];
+    };
+    expect(list.images).toMatchObject([{ file: "render-01.avif", width: 2400 }]);
+
+    const file = await app.request("/files/kyoto-alley/render-01.avif", { headers: { host: HOST } });
+    expect(file.status).toBe(200);
+    expect(file.headers.get("content-type")).toBe("image/avif");
+    expect(file.headers.get("x-content-type-options")).toBe("nosniff");
+    const etag = file.headers.get("etag")!;
+    expect((await app.request("/files/kyoto-alley/render-01.avif", { headers: { host: HOST, "if-none-match": etag } })).status).toBe(304);
+  });
+
+  it("names Japanese-only uploads by time", async () => {
+    const app = await withNote();
+    const res = await upload(app, await png(), "スクリーンショット.png");
+    expect(((await res.json()) as { file: string }).file).toMatch(/^image-\d{8}-\d{4}\.avif$/);
+  });
+
+  it("explains files it can't read, or a missing file", async () => {
+    const app = await withNote();
+    const bad = await upload(app, new Blob(["hello"]), "notes.txt");
+    expect(bad.status).toBe(422);
+    expect(((await bad.json()) as { error: string }).error).toMatch(/Can't read this image/);
+
+    const none = await app.request("/api/notes/kyoto-alley/images", { method: "POST", headers: ORIGIN, body: new FormData() });
+    expect(none.status).toBe(400);
+  });
+
+  it("refuses uploads from other sites", async () => {
+    const app = await withNote();
+    const res = await upload(app, await png(), "x.png", { host: HOST, origin: "https://evil.example" });
+    expect(res.status).toBe(403);
+  });
+
+  it("serves only plain image names from the note's folder", async () => {
+    const app = await withNote();
+    for (const path of ["/files/kyoto-alley/index.md", "/files/kyoto-alley/..%2F..%2Fblok.config.json", "/files/..%2Fnotes/x.avif"]) {
+      expect((await app.request(path, { headers: { host: HOST } })).status).toBe(400);
+    }
+    expect((await app.request("/files/kyoto-alley/missing.avif", { headers: { host: HOST } })).status).toBe(404);
+  });
+
+  it("serves SVGs placed by hand with scripts switched off", async () => {
+    const app = await withNote();
+    writeFileSync(join(checkout.parent, "notes", "notes", "kyoto-alley", "map.svg"), "<svg xmlns='http://www.w3.org/2000/svg'/>");
+    const res = await app.request("/files/kyoto-alley/map.svg", { headers: { host: HOST } });
+    expect(res.headers.get("content-type")).toBe("image/svg+xml");
+    expect(res.headers.get("content-security-policy")).toContain("default-src 'none'");
   });
 });
 
