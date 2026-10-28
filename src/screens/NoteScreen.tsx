@@ -1,7 +1,9 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
-import type { Note } from "../../shared/types.ts";
+import { scanMdx } from "../../shared/mdx.ts";
+import type { Note, VocabEntry } from "../../shared/types.ts";
+import { emptyVocabCard, findVocabCards } from "../../shared/vocabcard.ts";
 import { api, uploadImage } from "../api.ts";
 import { CodeBadge } from "../components/CodeBadge.tsx";
 import { MetaPanel } from "../components/MetaPanel.tsx";
@@ -9,12 +11,16 @@ import { Mosaic } from "../components/Mosaic.tsx";
 import { Stamp } from "../components/Stamp.tsx";
 import { StatusLine } from "../components/StatusLine.tsx";
 import { TitleBlock } from "../components/TitleBlock.tsx";
-import { Editor, type EditorHandle, type UploadState } from "../editor/Editor.tsx";
+import { VerticalPreview } from "../components/VerticalPreview.tsx";
+import { VocabCardDialog } from "../components/VocabCardDialog.tsx";
+import { Editor, type EditorHandle, type InboxDraft, type UploadState } from "../editor/Editor.tsx";
 import { useNoteDraft } from "../editor/useNoteDraft.ts";
+import { downloadAnki } from "../lib/anki.ts";
 import { stationCodes } from "../lib/codes.ts";
 import { splitTitle, titleSize } from "../lib/format.ts";
 import { imageFiles } from "../lib/images.ts";
 import { TYPE_LABELS } from "../lib/labels.ts";
+import { cardToInput } from "../lib/vocab.ts";
 import { useNote, useNotes } from "../queries.ts";
 
 const back = (
@@ -52,6 +58,25 @@ function NoteEditor({ note }: { note: Note }) {
   const queryClient = useQueryClient();
   const [, navigate] = useLocation();
   const [uploads, setUploads] = useState<UploadState>({ pending: 0, error: null });
+  const [inboxDraft, setInboxDraft] = useState<InboxDraft | null>(null);
+  /** The text shown in the vertical preview, taken when it opens; null while editing. */
+  const [vertical, setVertical] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!notice) return;
+    const timer = setTimeout(() => setNotice(null), 5000);
+    return () => clearTimeout(timer);
+  }, [notice]);
+
+  const vocabCards = useMemo(() => findVocabCards(saved.body, scanMdx(saved.body)).length, [saved.body]);
+  const exportAnki = () => {
+    const body = draft.currentBody();
+    const rows = findVocabCards(body, scanMdx(body)).flatMap(({ card }) =>
+      card ? [{ ...card, meaning: card.definition, source: meta.title }] : [],
+    );
+    downloadAnki(rows);
+  };
 
   const upload = async (file: File) => {
     const image = await uploadImage(note.slug, file);
@@ -155,23 +180,54 @@ function NoteEditor({ note }: { note: Note }) {
             </p>
           ))}
 
-          <Editor
-            ref={editor}
-            initialDoc={note.body}
-            slug={note.slug}
-            lang={meta.lang}
-            label={`Text of ${meta.title || "the note"}`}
-            onChange={draft.setBody}
-            uploadImage={upload}
-            onUploads={setUploads}
-          />
+          <div className="view-toggle" role="group" aria-label="View">
+            <button
+              type="button"
+              className={vertical === null ? "chip is-on" : "chip"}
+              aria-pressed={vertical === null}
+              onClick={() => setVertical(null)}
+            >
+              Edit<span lang="ja">編集</span>
+            </button>
+            <button
+              type="button"
+              className={vertical !== null ? "chip is-on" : "chip"}
+              aria-pressed={vertical !== null}
+              title="Read the note set vertically, right to left"
+              onClick={() => setVertical(draft.currentBody())}
+            >
+              Vertical<span lang="ja">縦書き</span>
+            </button>
+          </div>
 
-          {uploads.error && (
-            <p className="plate plate--error">
-              Couldn't add {uploads.error}
-            </p>
-          )}
-          <ImageDrop onFiles={(files) => editor.current?.addImages(files)} />
+          {vertical !== null && <VerticalPreview body={vertical} slug={note.slug} lang={meta.lang} />}
+
+          {/* stays mounted while the vertical preview shows, so the editor keeps its place and history */}
+          <div className="note-text" hidden={vertical !== null}>
+            <Editor
+              ref={editor}
+              initialDoc={note.body}
+              slug={note.slug}
+              lang={meta.lang}
+              label={`Text of ${meta.title || "the note"}`}
+              onChange={draft.setBody}
+              uploadImage={upload}
+              onUploads={setUploads}
+              onAddToInbox={setInboxDraft}
+            />
+
+            {uploads.error && (
+              <p className="plate plate--error">
+                Couldn't add {uploads.error}
+              </p>
+            )}
+            <div className="add-tools">
+              <ImageDrop onFiles={(files) => editor.current?.addImages(files)} />
+              <button type="button" className="add-card" onClick={() => editor.current?.newCard()}>
+                + Vocab card<span lang="ja">単語カード</span>
+              </button>
+            </div>
+          </div>
         </div>
 
         <MetaPanel
@@ -183,6 +239,8 @@ function NoteEditor({ note }: { note: Note }) {
           onRename={rename}
           onTrash={trash}
           published={saved.meta.published}
+          vocabCards={vocabCards}
+          onExportAnki={exportAnki}
           beforePublish={async () => {
             await draft.saveNow();
           }}
@@ -195,6 +253,31 @@ function NoteEditor({ note }: { note: Note }) {
           }
         />
       </div>
+
+      {inboxDraft && (
+        <VocabCardDialog
+          mode="new"
+          inbox={{ source: meta.title }}
+          initial={{ ...emptyVocabCard(), ...inboxDraft }}
+          onSave={async (card, source) => {
+            const entry = await api<VocabEntry>("/vocab", { method: "POST", body: JSON.stringify(cardToInput(card, source)) });
+            void queryClient.invalidateQueries({ queryKey: ["vocab"] });
+            setNotice(`Saved ${entry.word} to the vocab inbox`);
+          }}
+          onClose={(saved) => {
+            setInboxDraft(null);
+            if (!saved) editor.current?.focus();
+          }}
+        />
+      )}
+      {notice && (
+        <p className="toast" role="status">
+          {notice}
+          <Link href="/vocab">
+            Open<span lang="ja">単語帳</span>
+          </Link>
+        </p>
+      )}
 
       <StatusLine
         status={draft.status}

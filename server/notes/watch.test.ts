@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { afterEach, beforeEach, expect, it } from "vitest";
 import { tempCheckout } from "../testing.ts";
 import { createNoteStore } from "./store.ts";
-import { watchNotes, type NotesWatcher } from "./watch.ts";
+import { watchFolder, watchNotes, type NotesWatcher } from "./watch.ts";
 
 // These use the real file system watcher, so they wait for real events.
 
@@ -52,7 +52,8 @@ it("reports blok's own writes, renames and trashing", async () => {
   expect(await waitForBatch()).toEqual(["mine", "ours"]);
 
   await store.trash("ours");
-  expect(await waitForBatch()).toEqual(["ours"]);
+  // under load, a late event from the rename can land in this batch too
+  expect(await waitForBatch()).toContain("ours");
 });
 
 it("batches a burst of changes into one event", async () => {
@@ -75,4 +76,19 @@ it("ignores .trash and temp files", async () => {
   await new Promise((r) => setTimeout(r, 400));
   for (const batch of batches) for (const slug of batch) seen.add(slug);
   expect([...seen]).toEqual(["real"]);
+});
+
+it("watchFolder creates the vocab folder and reports changes to it", async () => {
+  const vocab = join(checkout.parent, "blok-notes", "vocab");
+  let events = 0;
+  const folder = watchFolder(vocab, () => events++, { debounceMs: 50 });
+  await folder.ready;
+  try {
+    writeFileSync(join(vocab, "20261028-101500-ab12.yaml"), "word: 松明\n");
+    const start = Date.now();
+    while (events === 0 && Date.now() - start < 3000) await new Promise((r) => setTimeout(r, 25));
+    expect(events).toBe(1);
+  } finally {
+    await folder.close();
+  }
 });

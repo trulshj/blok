@@ -6,14 +6,17 @@ import { loadConfig, type Config } from "./config.ts";
 import { createHub } from "./events.ts";
 import { localOnly } from "./guard.ts";
 import { createCatalog, type Catalog } from "./notes/catalog.ts";
+import { registerJapaneseRoutes } from "./japanese/routes.ts";
 import { ImageError } from "./notes/images.ts";
 import { createPublisher, PublishError, type Publisher } from "./publish/publisher.ts";
 import { registerPublishRoutes } from "./publish/routes.ts";
 import { registerNoteRoutes, RequestError } from "./notes/routes.ts";
 import { createNoteStore, NoteError, type NoteStore } from "./notes/store.ts";
-import { watchNotes, type NotesWatcher } from "./notes/watch.ts";
+import { watchFolder, watchNotes, type NotesWatcher } from "./notes/watch.ts";
 import { createNotesFolder, SetupError, SetupInput, setupStatus } from "./setup.ts";
 import { createSync, SyncError, type Sync } from "./sync.ts";
+import { registerVocabRoutes } from "./vocab/routes.ts";
+import { createVocabStore, VocabError, type VocabStore } from "./vocab/store.ts";
 
 const NOTE_ERROR_STATUS = {
   "invalid-slug": 400,
@@ -23,6 +26,7 @@ const NOTE_ERROR_STATUS = {
   conflict: 409,
   unreadable: 409,
 } as const;
+const VOCAB_ERROR_STATUS = { "invalid-id": 400, "not-found": 404 } as const;
 const HEARTBEAT_MS = 20_000;
 
 export function createApp(root: string, { watch = false } = {}) {
@@ -39,20 +43,22 @@ export function createApp(root: string, { watch = false } = {}) {
     sync: Sync;
     publisher: Publisher;
     siteDir: string;
-    watcher?: NotesWatcher;
+    vocab: VocabStore;
+    watchers: NotesWatcher[];
   };
   let runtime: Runtime | null = null;
   function notes(): Runtime | null {
     if (!setupStatus(config).ready) return null;
     const key = `${config.notesDir}|${config.trulsDevDir}`;
     if (runtime?.key !== key) {
-      void runtime?.watcher?.close();
+      for (const w of runtime?.watchers ?? []) void w.close();
       const store = createNoteStore(config.notesDir);
       const catalog = createCatalog(store);
       const onChange = async (slugs: string[]) => {
         await catalog.refresh(slugs).catch((err) => console.error("Couldn't refresh notes:", err));
         hub.publish({ type: "notes", slugs });
       };
+      const vocab = createVocabStore(config.notesDir);
       runtime = {
         key,
         store,
@@ -60,7 +66,10 @@ export function createApp(root: string, { watch = false } = {}) {
         sync: createSync(config.notesDir),
         publisher: createPublisher({ siteDir: config.trulsDevDir, store }),
         siteDir: config.trulsDevDir,
-        watcher: watch ? watchNotes(store.dir, onChange) : undefined,
+        vocab,
+        watchers: watch
+          ? [watchNotes(store.dir, onChange), watchFolder(vocab.dir, () => hub.publish({ type: "vocab" }))]
+          : [],
       };
     }
     return runtime;
@@ -73,6 +82,7 @@ export function createApp(root: string, { watch = false } = {}) {
     if (err instanceof RequestError) return c.json({ error: err.message }, err.status);
     if (err instanceof ImageError) return c.json({ error: err.message }, 422);
     if (err instanceof PublishError) return c.json({ error: err.message, code: err.code }, 409);
+    if (err instanceof VocabError) return c.json({ error: err.message, code: err.code }, VOCAB_ERROR_STATUS[err.code]);
     console.error(err);
     return c.json({ error: err.message }, 500);
   });
@@ -101,6 +111,8 @@ export function createApp(root: string, { watch = false } = {}) {
 
   registerNoteRoutes(app, notes);
   registerPublishRoutes(app, notes);
+  registerJapaneseRoutes(app);
+  registerVocabRoutes(app, notes);
 
   // git sync of the notes folder; ?fetch=1 also checks the remote (at most once a minute)
   const syncFor = () => {
@@ -151,6 +163,8 @@ export function createApp(root: string, { watch = false } = {}) {
     hub,
     notes,
     getConfig: () => config,
-    close: async () => runtime?.watcher?.close(),
+    close: async () => {
+      await Promise.all((runtime?.watchers ?? []).map((w) => w.close()));
+    },
   };
 }

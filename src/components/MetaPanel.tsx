@@ -21,6 +21,9 @@ type Props = {
   published: PublishInfo | undefined;
   beforePublish: () => Promise<void>;
   publishBlocked: string | null;
+  /** How many vocab cards the note has, for the Anki export. */
+  vocabCards: number;
+  onExportAnki: () => void;
 };
 
 /** Pick the cover from the images in the note's folder, plus alt text for it. */
@@ -85,7 +88,7 @@ function CoverPicker({
 }
 
 /** The note's details, edited in place and autosaved with the text. */
-export function MetaPanel({ slug, meta, dates, code, onChange, onRename, onTrash, published, beforePublish, publishBlocked }: Props) {
+export function MetaPanel({ slug, meta, dates, code, onChange, onRename, onTrash, published, beforePublish, publishBlocked, vocabCards, onExportAnki }: Props) {
   const [confirmTrash, setConfirmTrash] = useState(false);
   const [busy, setBusy] = useState<"rename" | "trash" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -233,6 +236,20 @@ export function MetaPanel({ slug, meta, dates, code, onChange, onRename, onTrash
         <button type="button" className="btn btn--ghost" disabled={busy !== null} onClick={() => act("rename", onRename)}>
           {busy === "rename" ? "Renaming…" : `Rename file to ${suggested}`}
         </button>
+      )}
+
+      {vocabCards > 0 && (
+        <div className="meta-sec">
+          <span className="flabel">
+            Vocab cards<span lang="ja">単語カード</span>
+          </span>
+          <p className="hint">
+            {vocabCards} {vocabCards === 1 ? "card" : "cards"} in this note, ready for Anki's File → Import.
+          </p>
+          <button type="button" className="btn btn--ghost" onClick={onExportAnki}>
+            Export for Anki<span lang="ja">Anki用に書き出す</span>
+          </button>
+        </div>
       )}
 
       <PublishPanel slug={slug} published={published} beforePublish={beforePublish} blocked={publishBlocked} />

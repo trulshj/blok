@@ -1,5 +1,8 @@
 import { Document, isScalar, isSeq } from "yaml";
+import { furiganaToHtml } from "../../shared/furigana.ts";
+import { escapeBraces, mapProse, scanMdx } from "../../shared/mdx.ts";
 import type { Note } from "../../shared/types.ts";
+import { findVocabCards } from "../../shared/vocabcard.ts";
 import { preview } from "../notes/preview.ts";
 
 /** Where garden posts and their images live in the truls.dev repo. */
@@ -38,6 +41,21 @@ export function rewriteImages(body: string, slug: string): { body: string; names
   return { body: rewritten, names: [...names] };
 }
 
+export const VOCABCARD_IMPORT = 'import VocabCard from "../../components/VocabCard.astro";';
+
+/**
+ * The body as truls.dev gets it:
+ * - Furigana in the text becomes <ruby>. Inside <VocabCard … /> it stays {…|…}, which the component reads.
+ * - In .mdx, other { and } in the text are escaped, so MDX shows them instead of running them as code.
+ * - A body with vocab cards gets the VocabCard import if it doesn't have it.
+ */
+export function publishBody(body: string, { mdx }: { mdx: boolean }): string {
+  const regions = scanMdx(body);
+  const out = mapProse(body, regions, (prose) => (mdx ? escapeBraces(furiganaToHtml(prose)) : furiganaToHtml(prose)));
+  const needsImport = mdx && findVocabCards(body, regions).length > 0 && !/^import\s+VocabCard\b/m.test(body);
+  return needsImport ? `${VOCABCARD_IMPORT}\n\n${out}` : out;
+}
+
 /**
  * The garden post for a note, in the style of the existing posts on truls.dev: title, pubDate
  * (a plain date), isDraft, excerpt, type, lang, status, inline tags, then image and titleJa
@@ -69,10 +87,10 @@ export function toGardenPost(note: Note, { slug, pubDate, draft }: { slug: strin
   if (isScalar(lang)) lang.type = "QUOTE_DOUBLE";
 
   const frontmatter = `---\n${doc.toString({ lineWidth: 0 })}---\n`;
-  const ext = needsMdx(note.body) ? "mdx" : "md";
+  const mdx = needsMdx(note.body);
   return {
-    file: `${GARDEN_DIR}/${slug}.${ext}`,
-    content: `${frontmatter}\n${body.trimEnd()}\n`,
+    file: `${GARDEN_DIR}/${slug}.${mdx ? "mdx" : "md"}`,
+    content: `${frontmatter}\n${publishBody(body, { mdx }).trimEnd()}\n`,
     frontmatter,
     images: names.map((name) => ({ name, target: `${GARDEN_IMAGES}/${slug}/${name}` })),
   };

@@ -284,3 +284,54 @@ kbd { font: 500 11px var(--mono); padding: 2px 5px; border: 1px solid var(--ink)
 }
 .dialog::backdrop { background: rgb(21 20 19 / .45); }
 .dialog-form { display: flex; flex-direction: column; gap: 18px; padding: 24px; }
+.dialog--wide { width: min(880px, calc(100vw - 32px)); }
+
+.btn--small { padding: 7px 10px; font-size: 11px; gap: 6px; }
+.btn--ghost [lang="ja"] { color: var(--muted); }
+.btn--ghost:hover:not(:disabled) [lang="ja"] { color: var(--ink); }
+.actions { flex-wrap: wrap; }
+.actions-end { margin-left: auto; }
+.field--ja { font-family: var(--jp); font-size: 16px; letter-spacing: .03em; }
+.field-with-button { display: flex; gap: 8px; }
+.field-with-button .field { flex: 1; min-width: 0; }
+.field-foot { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.field-foot code { font-size: 11.5px; background: var(--cream); padding: 0 3px; }
+
+/* furigana dialog */
+.readings {
+  display: grid;
+  grid-template-columns: minmax(120px, max-content) minmax(0, 1fr);
+  gap: 8px 16px;
+  align-items: center;
+  max-height: 46vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.reading-row { display: contents; }
+.reading-word { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 600; letter-spacing: .04em; }
+.reading-word input { width: 18px; height: 18px; accent-color: var(--ink); }
+.reading-row .field { font-family: var(--jp); font-size: 16px; }
+.reading-row .field:disabled { opacity: .45; }
+.furigana-preview {
+  max-height: 22vh;
+  overflow-y: auto;
+  padding: 12px 14px;
+  background: var(--cream);
+  border-left: 8px solid var(--accent);
+  font-size: 18px;
+  line-height: 2.2;
+  white-space: pre-wrap;
+}
+
+/* vocab card dialog */
+.vocab-form { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 24px; }
+.vocab-fields { display: flex; flex-direction: column; gap: 14px; }
+.vocab-word-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 12px; }
+.vocab-preview { display: flex; flex-direction: column; gap: 10px; }
+.vocab-preview .vocab-card { margin-top: 18px; }
+.dialog textarea.field { resize: vertical; font-family: var(--ui); }
+.dialog textarea.field--ja { font-family: var(--jp); }
+
+@media (max-width: 760px) {
+  .vocab-form, .vocab-word-row { grid-template-columns: 1fr; }
+}

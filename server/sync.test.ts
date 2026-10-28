@@ -163,6 +163,11 @@ describe("commitMessage", () => {
     expect(commitMessage(files).split("\n")[0]).toBe("blok: a, b and 2 more; trash old");
   });
 
+  it("counts vocab entries", () => {
+    const files = ["notes/kyoto/index.md", "vocab/20261028-101500-ab12.yaml", "vocab/.trash/20261027-090000-cd34.yaml"];
+    expect(commitMessage(files).split("\n")[0]).toBe("blok: kyoto; 2 vocab");
+  });
+
   it("counts files outside notes/", () => {
     expect(commitMessage([".gitattributes"]).split("\n")[0]).toBe("blok: 1 file");
   });

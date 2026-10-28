@@ -106,6 +106,8 @@ export function useNoteDraft(note: Note, editor: RefObject<EditorHandle | null>)
       statsTimer.current = setTimeout(() => setStats(countText(bodyRef.current)), 400);
     },
     saveNow: () => saver.saveNow(),
+    /** The text as it is in the editor now, saved or not. */
+    currentBody: () => bodyRef.current,
   }));
 
   return {

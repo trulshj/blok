@@ -27,6 +27,31 @@ git repository. By default it's `../blok-notes`, next to this checkout.
   most 2400px wide, without the original metadata (no GPS from phone photos), and saved next to the note.
   Pick a cover in the details panel.
 
+## Japanese
+
+- **Furigana:**
+  - Write `{漢字|かんじ}` for one reading over a word, or `{漢字|かん|じ}` for one per character. It
+    shows as ruby everywhere except the line you're editing.
+  - Select some text and press `Ctrl/⌘ + Shift + F`, or click **ふりがな** above the selection. With
+    nothing selected, the shortcut covers the whole paragraph.
+  - Every word with kanji gets a suggested reading from a dictionary (kuromoji, offline). Check it,
+    fix it (romaji works) or untick it. Okurigana stays outside: 覚えた becomes `{覚|おぼ}えた`.
+- **Vocab cards:**
+  - `<VocabCard … />` blocks show as cards. Click one to edit it, or add one with **+ Vocab card**
+    under the text or **+ Card** above a selection.
+  - In an example, `{松明}` highlights the word and `{洞窟|どうくつ}` adds furigana. Furigana on
+    the card's own word is highlighted too.
+- **Vocab inbox (Vocab in the top bar):**
+  - Quick-add words as you meet them; the reading fills itself in. You can also select a word in a
+    note and choose **+ Inbox**, which brings the sentence along as an example.
+  - **+ Note** puts a word into a note as a vocab card. Each word is a small file in `vocab/` in the
+    notes folder, so adding words on two machines never clashes in git.
+- **Anki:** **Export for Anki** on the Vocab screen, or in a note's details panel for its cards,
+  saves a file for Anki's File → Import. Furigana in examples uses Anki's `漢字[かんじ]` form;
+  `{{furigana:Example}}` in the card template shows it as ruby.
+- **Vertical:** the **Vertical 縦書き** toggle above the text shows the note set vertically,
+  right to left.
+
 ## Syncing between machines
 
 The **Sync** button in the top bar (`● SYNCED 同期済み ↑0 ↓0`) runs these steps on the notes folder:
@@ -53,6 +78,9 @@ frontmatter, and the images to copy. Then blok:
 2. Commits only those files in truls.dev, never your other work there.
 3. Pushes `main`, which Vercel deploys.
 
+- **Furigana** becomes `<ruby>` in the post. Inside vocab cards it stays as written, for truls.dev's
+  VocabCard to show. A post with vocab cards gets the VocabCard import added when it doesn't have it.
+  Other `{` and `}` in `.mdx` text are escaped, so they show as written.
 - **Republishing** updates the post and keeps the first publish date.
 - **Unpublish** sets `isDraft: true`.
 - **Edited posts:** if a post was edited directly in truls.dev, or its slug belongs to another post,
@@ -89,9 +117,11 @@ The server is plain TypeScript that Node 24 runs directly, so it has no build st
 
 - `server/`: Hono API (config, setup, request guard, git sync)
 - `server/publish/`: publishing notes to truls.dev, and importing its garden posts
+- `server/japanese/`: reading suggestions (kuromoji). `server/vocab/`: the vocab inbox
 - `server/notes/`: the notes core: frontmatter, slugs, the note store (create, edit, rename, trash) and the
   file watcher behind the live `/api/events` stream
 - `src/`: React UI. `src/editor/` has the CodeMirror editor, live styling and autosave.
-- `shared/`: types used by both
+- `shared/`: code and types used by both, including furigana, VocabCard and an MDX scanner that
+  tells prose from code and components
 - `design/`: the design system: `tokens.css`, the tile generator `tiles.js` (shared with the app), and
   `sketch.html`. With `npm run dev` running, the sketch is at http://localhost:4747/design/sketch.html.

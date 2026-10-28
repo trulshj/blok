@@ -3,6 +3,10 @@ import type { NoteSummary } from "../../shared/types.ts";
 import { stationCodes } from "./codes.ts";
 import { countText, relativeTime, splitTitle, titleSize } from "./format.ts";
 
+it("countText doesn't count furigana readings", () => {
+  expect(countText("{松明|たいまつ}を置く")).toEqual({ words: 0, cjk: 5 });
+});
+
 it("countText counts Latin words and Japanese characters separately", () => {
   expect(countText("Walked 先斗町 Pontochō on **Street View**, isn't it? 提灯と暖簾。")).toEqual({ words: 7, cjk: 8 });
   expect(countText("")).toEqual({ words: 0, cjk: 0 });

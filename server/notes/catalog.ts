@@ -1,5 +1,6 @@
 import MiniSearch from "minisearch";
 import type { Note, NoteSummary, SearchResult } from "../../shared/types.ts";
+import { furiganaReadings, stripFurigana } from "../../shared/furigana.ts";
 import { foldLatin } from "../../shared/slug.ts";
 import { NoteError, type NoteStore } from "./store.ts";
 
@@ -37,6 +38,16 @@ export function tokenize(text: string): string[] {
 const isCjk = (term: string) => IS_CJK.test(term);
 
 /**
+ * The body as it reads, so 松明を finds {松明|たいまつ}を and {松明}を (a VocabCard highlight),
+ * with the readings added at the end so たいまつ finds it too.
+ */
+export function searchText(body: string): string {
+  const readings = furiganaReadings(body);
+  const text = stripFurigana(body).replace(/\{([^\s{}|]+)\}/g, "$1");
+  return readings.length ? `${text}\n${readings.join(" ")}` : text;
+}
+
+/**
  * In-memory list of note summaries plus a full-text index, built on first use and kept current
  * by refresh(): the watcher calls it for outside changes, the API routes for blok's own.
  */
@@ -64,7 +75,7 @@ export function createCatalog(store: NoteStore) {
       titleJa: note.meta.titleJa ?? "",
       tags: note.meta.tags.join(" "),
       excerpt: note.meta.excerpt ?? "",
-      body,
+      body: searchText(body),
     };
     if (index.has(note.slug)) index.replace(doc);
     else index.add(doc);

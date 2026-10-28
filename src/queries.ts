@@ -1,5 +1,15 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import type { Note, NoteImage, NoteSummary, SearchResult, SyncStatus } from "../shared/types.ts";
+import type {
+  Note,
+  NoteImage,
+  NoteSummary,
+  ReadingsRequest,
+  ReadingsResponse,
+  ReadingToken,
+  SearchResult,
+  SyncStatus,
+  VocabEntry,
+} from "../shared/types.ts";
 import { api } from "./api.ts";
 
 /** All notes, kept current by useServerEvents. */
@@ -43,5 +53,35 @@ export function useSearch(q: string) {
     select: (data) => data.results,
     enabled: query.length > 0,
     placeholderData: keepPreviousData,
+  });
+}
+
+/** Reading suggestions for each text (kuromoji on the server). */
+export function useReadings(texts: string[]) {
+  return useQuery({
+    queryKey: ["readings", texts],
+    queryFn: () => fetchReadings(texts),
+    staleTime: Infinity,
+  });
+}
+
+export async function fetchReadings(texts: string[]): Promise<ReadingToken[][]> {
+  if (!texts.length) return [];
+  const body: ReadingsRequest = { texts };
+  return (await api<ReadingsResponse>("/japanese/readings", { method: "POST", body: JSON.stringify(body) })).results;
+}
+
+/** A reading for a whole word or phrase, kana included: 見つける → みつける. */
+export async function suggestReading(text: string): Promise<string> {
+  const [tokens = []] = await fetchReadings([text]);
+  return tokens.map((t) => t.reading ?? t.surface).join("");
+}
+
+/** The vocab inbox, newest first; kept current by useServerEvents. */
+export function useVocab() {
+  return useQuery({
+    queryKey: ["vocab"],
+    queryFn: () => api<{ entries: VocabEntry[] }>("/vocab"),
+    select: (data) => data.entries,
   });
 }

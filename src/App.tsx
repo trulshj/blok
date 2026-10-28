@@ -6,6 +6,7 @@ import { TopBar } from "./components/TopBar.tsx";
 import { Index } from "./screens/Index.tsx";
 import { NoteScreen } from "./screens/NoteScreen.tsx";
 import { Setup } from "./screens/Setup.tsx";
+import { Vocab } from "./screens/Vocab.tsx";
 import { useServerEvents } from "./useServerEvents.ts";
 
 export function App() {
@@ -31,6 +32,7 @@ export function App() {
         <Switch>
           <Route path="/" component={Index} />
           <Route path="/notes/:slug">{(params) => <NoteScreen key={params.slug} slug={params.slug} />}</Route>
+          <Route path="/vocab" component={Vocab} />
           <Route>
             <main className="screen">
               <p className="plate plate--error">There's no page here.</p>

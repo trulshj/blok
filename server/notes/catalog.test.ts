@@ -2,7 +2,7 @@ import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { tempCheckout } from "../testing.ts";
-import { createCatalog, tokenize, type Catalog } from "./catalog.ts";
+import { createCatalog, searchText, tokenize, type Catalog } from "./catalog.ts";
 import { createNoteStore, type NoteStore } from "./store.ts";
 
 describe("tokenize", () => {
@@ -24,6 +24,15 @@ describe("tokenize", () => {
       "geometry",
       "nodes",
     ]);
+  });
+});
+
+describe("searchText", () => {
+  it("reads through furigana and highlights, and adds the readings", () => {
+    expect(searchText('{洞窟|どうくつ}の中に{松明}を置く <VocabCard example="{牛|うし}を" />')).toBe(
+      '洞窟の中に松明を置く <VocabCard example="牛を" />\nどうくつ うし',
+    );
+    expect(searchText("No readings {here}")).toBe("No readings here");
   });
 });
 

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { parse } from "yaml";
 import { z } from "zod";
 import type { Note } from "../../shared/types.ts";
-import { localDate, needsMdx, rewriteImages, toGardenPost } from "./garden.ts";
+import { localDate, needsMdx, publishBody, rewriteImages, toGardenPost, VOCABCARD_IMPORT } from "./garden.ts";
 
 // A copy of truls.dev's garden schema (src/content.config.ts). Astro reads frontmatter with
 // js-yaml, where a plain 2026-10-28 is a Date; YAML 1.1 parsing mimics that here.
@@ -96,6 +96,36 @@ describe("toGardenPost", () => {
     const post = toGardenPost(note({}, body), { slug: "minecraft-vocab-1", pubDate: "2026-10-28", draft: false });
     expect(post.file).toBe("src/content/garden/minecraft-vocab-1.mdx");
     expect(post.content.endsWith('<VocabCard word="松明" />\n')).toBe(true);
+  });
+});
+
+describe("publishBody", () => {
+  it("turns furigana in the text into ruby, in .md and .mdx", () => {
+    const ruby = "<ruby>提灯<rp>(</rp><rt>ちょうちん</rt><rp>)</rp></ruby>";
+    expect(publishBody("## {提灯|ちょうちん}の光", { mdx: false })).toBe(`## ${ruby}の光`);
+    expect(publishBody("{提灯|ちょうちん}の光", { mdx: true })).toBe(`${ruby}の光`);
+  });
+
+  it("leaves furigana in code and in VocabCard attributes as written", () => {
+    const body = [
+      "`{本|ほん}`",
+      "```\n{本|ほん}\n```",
+      VOCABCARD_IMPORT,
+      '<VocabCard\n  word="松明"\n  example="{洞窟|どうくつ}の{松明}"\n/>',
+    ].join("\n\n");
+    expect(publishBody(body, { mdx: true })).toBe(body);
+  });
+
+  it("escapes other braces in .mdx text only", () => {
+    expect(publishBody("a {b} c", { mdx: true })).toBe("a \\{b\\} c");
+    expect(publishBody("a {b} c", { mdx: false })).toBe("a {b} c");
+    expect(publishBody("\\{本|ほん} stays literal", { mdx: true })).toBe("\\{本|ほん\\} stays literal");
+  });
+
+  it("adds the VocabCard import when a body uses cards without it", () => {
+    expect(publishBody('Intro\n\n<VocabCard word="羊" definition="Sheep" />', { mdx: true })).toBe(
+      `${VOCABCARD_IMPORT}\n\nIntro\n\n<VocabCard word="羊" definition="Sheep" />`,
+    );
   });
 });
 

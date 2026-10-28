@@ -2,7 +2,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import sharp from "sharp";
 import { afterEach, describe, expect, it } from "vitest";
-import type { Note, SetupStatus } from "../shared/types.ts";
+import type { Note, ReadingsResponse, SetupStatus, VocabEntry } from "../shared/types.ts";
 import { createApp } from "./app.ts";
 import { tempCheckout } from "./testing.ts";
 
@@ -155,6 +155,44 @@ describe("/api/notes", () => {
     const stale = await save(note.meta.updated);
     expect(stale.status).toBe(409);
     expect(await stale.json()).toMatchObject({ code: "conflict" });
+  });
+});
+
+describe("/api/vocab and /api/japanese", () => {
+  const get = { headers: { host: HOST } };
+  const send = (method: string, body: unknown) => ({ ...post(body), method });
+
+  it("adds, edits, marks, lists and removes vocab entries", async () => {
+    const blok = (checkout = tempCheckout(), createApp(checkout.root));
+    await blok.app.request("/api/setup", post({ notesDir: "../notes", gitInit: false }));
+    const { app } = blok;
+
+    const created = await app.request("/api/vocab", post({ word: "松明", reading: "たいまつ", meaning: "torch" }));
+    expect(created.status).toBe(201);
+    const entry = (await created.json()) as VocabEntry;
+
+    const edited = await app.request(`/api/vocab/${entry.id}`, send("PUT", { ...entry, meaning: "torch; pine-bright" }));
+    expect(((await edited.json()) as VocabEntry).meaning).toBe("torch; pine-bright");
+
+    const used = await app.request(`/api/vocab/${entry.id}/used`, post({ slug: "minecraft-vocab-1" }));
+    expect(((await used.json()) as VocabEntry).used).toEqual(["minecraft-vocab-1"]);
+
+    const list = (await (await app.request("/api/vocab", get)).json()) as { entries: VocabEntry[] };
+    expect(list.entries.map((e) => e.word)).toEqual(["松明"]);
+
+    expect((await app.request(`/api/vocab/${entry.id}`, send("DELETE", {}))).status).toBe(200);
+    expect((await app.request(`/api/vocab/${entry.id}`, send("DELETE", {}))).status).toBe(404);
+    expect((await app.request("/api/vocab/nope", send("PUT", { word: "x", reading: "", meaning: "" }))).status).toBe(400);
+    expect((await app.request("/api/vocab", post({ word: " ", reading: "", meaning: "" }))).status).toBe(400);
+  });
+
+  it("suggests readings", async () => {
+    const res = await setup().request("/api/japanese/readings", post({ texts: ["松明を置く"] }));
+    const { results } = (await res.json()) as ReadingsResponse;
+    expect(results[0]?.filter((t) => t.reading)).toEqual([
+      { surface: "松明", reading: "たいまつ" },
+      { surface: "置く", reading: "おく" },
+    ]);
   });
 });
 

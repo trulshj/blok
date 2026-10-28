@@ -270,7 +270,7 @@
    RESPONSIVE
    ============================================================ */
 @media (max-width: 1180px) {
-  .note-layout { grid-template-columns: 1fr; }
+  .note-layout { grid-template-columns: minmax(0, 1fr); } /* minmax: wide content (the vertical preview) scrolls instead of widening the page */
   .note-main { border-right: 0; border-bottom: 2px solid var(--ink); padding: 24px 32px 48px; }
   .meta { position: static; max-height: none; }
 }
@@ -278,3 +278,139 @@
   .note-main { padding: 20px 16px 40px; }
   .editor .cm-content { padding-left: 16px; }
 }
+
+/* ============================================================
+   JAPANESE: furigana, vocab cards, selection tools
+   ============================================================ */
+ruby { ruby-align: center; }
+rt { font-size: .5em; font-weight: 500; letter-spacing: 0; color: var(--ink-2); }
+.editor .md-ruby { cursor: text; }
+
+/* the buttons above a selection with kanji (selectionTools.ts) */
+.editor .cm-editor .cm-tooltip { background: none; border: 0; }
+.sel-tools { display: flex; gap: 2px; margin-bottom: 6px; background: var(--ink); border: 2px solid var(--ink); }
+.sel-tools button {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 5px 9px;
+  background: var(--ink);
+  color: var(--cream);
+  font: 700 11px var(--ui);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.sel-tools button:first-child { font-family: var(--jp); font-size: 12px; letter-spacing: .06em; }
+.sel-tools button [lang="ja"] { font-weight: 500; font-size: 10.5px; letter-spacing: .04em; color: var(--panel); }
+.sel-tools button:hover { background: var(--accent); color: var(--ink); }
+.sel-tools button:hover [lang="ja"] { color: var(--ink); }
+
+/* a vocab card: the editor's widget (vocabCards.ts) and VocabCardView share these */
+.vocab-card {
+  position: relative;
+  margin: 26px 0 18px;
+  padding: 30px 18px 16px;
+  background: var(--cream);
+  border: 2px solid var(--ink);
+  border-left: 8px solid var(--t, var(--accent));
+  font-family: var(--ui);
+  font-size: 15px;
+  line-height: 1.55;
+  white-space: normal;
+}
+.editor .vocab-card { cursor: pointer; }
+.editor .vocab-card:hover { outline: 3px solid var(--accent); outline-offset: 2px; }
+.vocab-card-word {
+  position: absolute;
+  top: 0;
+  left: 12px;
+  transform: translateY(-55%);
+  padding: 4px 12px 3px;
+  background: var(--ink);
+  color: var(--cream);
+  font-family: var(--jp);
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 1.3;
+  letter-spacing: .04em;
+}
+.vocab-card-word rt { color: var(--panel); font-size: .48em; letter-spacing: .06em; }
+.vocab-card-body { display: flex; flex-direction: column; gap: 6px; }
+.vocab-card-body p { margin: 0; }
+.vocab-card-def { font-weight: 600; }
+.vocab-card-example { font-family: var(--jp); font-size: 17px; line-height: 2.1; letter-spacing: .03em; }
+.vocab-card-example mark { background: color-mix(in srgb, var(--accent) 60%, transparent); color: var(--ink); padding: 0 2px; }
+.vocab-card-translation { color: var(--ink-2); font-style: italic; }
+.vocab-card-context { color: var(--muted); font-size: 13.5px; }
+.vocab-card-tag {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font: 500 10.5px var(--mono);
+  color: var(--muted);
+}
+.muted { color: var(--muted); }
+
+.add-tools { display: flex; flex-wrap: wrap; gap: 12px; max-width: 68ch; margin-top: 24px; }
+.add-tools .dropzone { flex: 1 1 320px; margin-top: 0; }
+.add-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 18px;
+  border: 2px solid var(--ink);
+  background: var(--cream);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.add-card [lang="ja"] { font-weight: 500; letter-spacing: .06em; color: var(--muted); }
+.add-card:hover { background: var(--accent); }
+.add-card:hover [lang="ja"] { color: var(--ink); }
+.add-card:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* ============================================================
+   VERTICAL PREVIEW (縦書き)
+   ============================================================ */
+.note-text { display: flex; flex-direction: column; gap: 16px; }
+.note-text[hidden] { display: none; }
+.view-toggle { display: flex; gap: 6px; max-width: 68ch; justify-content: flex-end; }
+
+.vertical {
+  writing-mode: vertical-rl;
+  height: min(74vh, 860px);
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 28px 32px;
+  background: var(--cream);
+  border: 2px solid var(--ink);
+  border-top: 8px solid var(--t);
+  font-family: var(--jp);
+  font-size: 19px;
+  line-height: 2;
+  letter-spacing: .06em;
+  font-feature-settings: "vert", "vpal";
+}
+.vertical:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.vertical > * { margin-block: 0 1em; }
+.vertical p { margin-inline: 0; margin-block: 0 .5em; text-indent: 1em; }
+.vertical h1, .vertical h2, .vertical h3, .vertical h4 { margin-block: 0 1em; margin-inline: 0 0; padding-inline-start: 2em; font-weight: 700; line-height: 1.6; }
+.vertical h2 { font-size: 1.3em; }
+.vertical h3 { font-size: 1.15em; }
+.vertical rt { font-size: .5em; letter-spacing: 0; }
+.vertical .tcy { text-combine-upright: all; }
+.vertical img { max-block-size: 60%; max-inline-size: 100%; display: block; outline: 2px solid var(--ink); }
+.vertical blockquote { margin-inline: 0; padding-block-start: 1em; border-block-start: 4px solid var(--taupe); }
+.vertical code { font-family: var(--mono); font-size: .85em; text-orientation: mixed; }
+.vertical pre { writing-mode: horizontal-tb; max-block-size: 100%; overflow: auto; font-size: 13px; }
+.vertical ul, .vertical ol { margin-inline: 0; padding-inline-start: 1.5em; }
+.vertical mark { background: color-mix(in srgb, var(--accent) 60%, transparent); }
+.vertical .vocab-card { margin: 0 0 0 1.5em; padding: 18px 14px; border-left: 2px solid var(--ink); border-top: 8px solid var(--t, var(--accent)); }
+.vertical .vocab-card p { text-indent: 0; margin: 0 0 0 .4em; }
+.vertical .vocab-card-word { position: static; transform: none; inline-size: fit-content; padding: 8px 4px; font-size: 1.4em; font-weight: 700; }
+.vertical .vocab-card-tag { display: none; }

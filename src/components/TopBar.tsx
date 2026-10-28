@@ -8,6 +8,7 @@ import { SyncButton } from "./SyncButton.tsx";
 export function TopBar({ ready }: { ready: boolean }) {
   const [location] = useLocation();
   const onNotes = location === "/" || location.startsWith("/notes/");
+  const onVocab = location === "/vocab";
 
   return (
     <header className="topbar">
@@ -24,9 +25,9 @@ export function TopBar({ ready }: { ready: boolean }) {
             <Link href="/" className={onNotes ? "is-on" : undefined} aria-current={onNotes ? "page" : undefined}>
               Notes<span lang="ja">ノート</span>
             </Link>
-            <span className="is-soon" title="Coming later">
-              Vocab<span lang="ja">単語</span>
-            </span>
+            <Link href="/vocab" className={onVocab ? "is-on" : undefined} aria-current={onVocab ? "page" : undefined}>
+              Vocab<span lang="ja">単語帳</span>
+            </Link>
           </nav>
           <SearchBox />
           <SyncButton />

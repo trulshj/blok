@@ -140,6 +140,39 @@ export type PublishResult = {
 
 export type ImportablePost = { file: string; slug: string; title: string; draft: boolean };
 
+// ---------- Japanese ----------
+
+/** A word from the reading service. `reading` is a hiragana suggestion, set for words with kanji. */
+export type ReadingToken = { surface: string; reading: string | null };
+
+/** POST /api/japanese/readings: the words of each text, in order. */
+export type ReadingsRequest = { texts: string[] };
+export type ReadingsResponse = { results: ReadingToken[][] };
+
+// ---------- vocab inbox ----------
+
+/** A word saved for later, in blok-notes/vocab/<id>.yaml. */
+export type VocabEntry = {
+  /** The file name: YYYYMMDD-HHmmss-xxxx. */
+  id: string;
+  word: string;
+  reading: string;
+  meaning: string;
+  /** Example sentence; {word} highlights, {漢字|かんじ} adds furigana, as in vocab cards. */
+  example?: string;
+  translation?: string;
+  /** A note about the word, like the card's context. */
+  context?: string;
+  /** Where the word came from: a game, a book, a sign. */
+  source?: string;
+  /** ISO timestamp, set by the server. */
+  added: string;
+  /** Notes the word went into as a vocab card. */
+  used: string[];
+};
+
+export type VocabInput = Omit<VocabEntry, "id" | "added" | "used"> & { used?: string[] };
+
 // ---------- git sync of the notes folder ----------
 
 export type SyncStatus = {
@@ -162,4 +195,4 @@ export type SyncStatus = {
 export type SyncResult = { committed: number; pulled: number; pushed: number; status: SyncStatus };
 
 /** Server-sent events on /api/events. */
-export type BlokEvent = { type: "notes"; slugs: string[] };
+export type BlokEvent = { type: "notes"; slugs: string[] } | { type: "vocab" };

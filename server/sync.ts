@@ -190,12 +190,14 @@ export type Sync = ReturnType<typeof createSync>;
 export function commitMessage(files: string[]): string {
   const notes = new Set<string>();
   const trashed = new Set<string>();
+  let vocab = 0;
   let other = 0;
   for (const file of files) {
     const trash = /^notes\/\.trash\/([^/]+)\//.exec(file);
     const note = /^notes\/([^/.][^/]*)\//.exec(file);
     if (trash?.[1]) trashed.add(trash[1]);
     else if (note?.[1]) notes.add(note[1]);
+    else if (file.startsWith("vocab/")) vocab++;
     else other++;
   }
 
@@ -204,7 +206,8 @@ export function commitMessage(files: string[]): string {
   const parts = [
     notes.size ? list([...notes].sort()) : "",
     trashed.size ? `trash ${list([...trashed].sort())}` : "",
-    !notes.size && !trashed.size && other ? `${other} ${other === 1 ? "file" : "files"}` : "",
+    vocab ? `${vocab} vocab` : "",
+    !notes.size && !trashed.size && !vocab && other ? `${other} ${other === 1 ? "file" : "files"}` : "",
   ].filter(Boolean);
 
   return `blok: ${parts.join("; ")}\n\nSynced from ${hostname()}`;

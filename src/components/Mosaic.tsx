@@ -11,6 +11,7 @@ const COLORS = {
   t: "var(--t)",
   teal: "var(--teal)",
   vermilion: "var(--vermilion)",
+  green: "var(--green)",
 } as const;
 
 type Props = {

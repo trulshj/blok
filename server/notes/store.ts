@@ -250,7 +250,7 @@ export function createNoteStore(notesDir: string, { now = () => new Date() } = {
 }
 
 /** Write to a temp file, then rename over the target, so a crash never leaves half a file. */
-async function writeAtomic(file: string, content: string | Uint8Array): Promise<void> {
+export async function writeAtomic(file: string, content: string | Uint8Array): Promise<void> {
   const temp = `${file}.${randomUUID().slice(0, 8)}.tmp`;
   await writeFile(temp, content);
   try {
@@ -262,7 +262,7 @@ async function writeAtomic(file: string, content: string | Uint8Array): Promise<
 }
 
 // Windows (antivirus, OneDrive, editors) can hold files for a moment, failing renames with EPERM/EBUSY
-async function renameWithRetry(from: string, to: string, attempts = 6): Promise<void> {
+export async function renameWithRetry(from: string, to: string, attempts = 6): Promise<void> {
   for (let i = 1; ; i++) {
     try {
       return await rename(from, to);

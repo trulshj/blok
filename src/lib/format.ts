@@ -1,3 +1,5 @@
+import { stripFurigana } from "../../shared/furigana.ts";
+
 const MINUTE = 60_000;
 const DAY = 24 * 60 * MINUTE;
 
@@ -44,8 +46,12 @@ export function titleSize(lines: string[], width: number, max: number): number {
 
 const CJK = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/gu;
 
-/** Words in Latin text, and Japanese characters counted separately (Japanese has no spaces to count). */
-export function countText(text: string): { words: number; cjk: number } {
+/**
+ * Words in Latin text, and Japanese characters counted separately (Japanese has no spaces to count).
+ * Furigana readings don't count.
+ */
+export function countText(markdown: string): { words: number; cjk: number } {
+  const text = stripFurigana(markdown);
   const cjk = text.match(CJK)?.length ?? 0;
   const words = text.replace(CJK, " ").match(/[\p{L}\p{N}]+(?:['’-][\p{L}\p{N}]+)*/gu)?.length ?? 0;
   return { words, cjk };

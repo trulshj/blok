@@ -31,6 +31,10 @@ describe("preview", () => {
     expect(preview("あ".repeat(50), 10)).toBe(`${"あ".repeat(10)}…`);
   });
 
+  it("leaves furigana readings out", () => {
+    expect(preview("洞窟の中に{松明|たいまつ}を{置|お}きました。")).toBe("洞窟の中に松明を置きました。");
+  });
+
   it("is empty for an empty body", () => {
     expect(preview("")).toBe("");
     expect(preview("# Only a heading")).toBe("");

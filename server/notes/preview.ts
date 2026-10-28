@@ -1,9 +1,11 @@
+import { stripFurigana } from "../../shared/furigana.ts";
+
 /**
  * Plain text for cards: the first paragraph that has some, with markdown, images, headings,
- * HTML/MDX lines and code blocks left out.
+ * HTML/MDX lines, code blocks and furigana readings left out.
  */
 export function preview(body: string, max = 220): string {
-  const blocks = body.replace(/```[\s\S]*?(```|$)/g, "").split(/\n\s*\n/);
+  const blocks = stripFurigana(body.replace(/```[\s\S]*?(```|$)/g, "")).split(/\n\s*\n/);
 
   for (const block of blocks) {
     const text = block
