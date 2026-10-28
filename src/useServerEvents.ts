@@ -12,6 +12,7 @@ export function useServerEvents() {
       const event = JSON.parse((e as MessageEvent<string>).data) as BlokEvent;
       void queryClient.invalidateQueries({ queryKey: ["notes"] });
       void queryClient.invalidateQueries({ queryKey: ["search"] });
+      void queryClient.invalidateQueries({ queryKey: ["sync"] }); // changed-file count
       for (const slug of event.slugs) {
         void queryClient.invalidateQueries({ queryKey: ["note", slug] });
         void queryClient.invalidateQueries({ queryKey: ["images", slug] });

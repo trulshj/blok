@@ -1,5 +1,5 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import type { Note, NoteImage, NoteSummary, SearchResult } from "../shared/types.ts";
+import type { Note, NoteImage, NoteSummary, SearchResult, SyncStatus } from "../shared/types.ts";
 import { api } from "./api.ts";
 
 /** All notes, kept current by useServerEvents. */
@@ -13,6 +13,16 @@ export function useNotes() {
 
 export function useNote(slug: string) {
   return useQuery({ queryKey: ["note", slug], queryFn: () => api<Note>(`/notes/${encodeURIComponent(slug)}`) });
+}
+
+/** Git state of the notes folder. Also checks the remote, which the server limits to once a minute. */
+export function useSyncStatus() {
+  return useQuery({
+    queryKey: ["sync"],
+    queryFn: () => api<SyncStatus>("/sync?fetch=1"),
+    refetchInterval: 5 * 60_000,
+    refetchOnWindowFocus: true,
+  });
 }
 
 /** Images in a note's folder, for the cover picker. */

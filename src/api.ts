@@ -4,10 +4,13 @@ import type { UploadedImage } from "../shared/types.ts";
 export class ApiError extends Error {
   status: number;
   code: string | undefined;
-  constructor(status: number, message: string, code?: string) {
+  /** The whole error response, for endpoints that send more than a message. */
+  data: Record<string, unknown>;
+  constructor(status: number, message: string, code?: string, data: Record<string, unknown> = {}) {
     super(message);
     this.status = status;
     this.code = code;
+    this.data = data;
   }
 }
 
@@ -39,6 +42,6 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   const body = await res.json().catch(() => ({}));
-  if (!res.ok) throw new ApiError(res.status, body.error ?? `${res.status} ${res.statusText}`, body.code);
+  if (!res.ok) throw new ApiError(res.status, body.error ?? `${res.status} ${res.statusText}`, body.code, body);
   return body as T;
 }

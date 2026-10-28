@@ -27,6 +27,22 @@ git repository. By default it's `../blok-notes`, next to this checkout.
   most 2400px wide, without the original metadata (no GPS from phone photos), and saved next to the note.
   Pick a cover in the details panel.
 
+## Syncing between machines
+
+The **Sync** button in the top bar (`● SYNCED 同期済み ↑0 ↓0`) runs these steps on the notes folder:
+
+1. Commits everything. The message names the changed notes and this machine.
+2. Fetches from the remote.
+3. Rebases onto anything new.
+4. Pushes.
+
+↑ is local changes to send, ↓ is commits waiting on the remote, which blok checks at most once a minute.
+
+If the same note changed on both machines in ways git can't combine, blok undoes the sync, so the folder
+stays clean and your commit is kept. It then tells you which notes clash and the commands to finish in a
+terminal. Git never waits for a password: if it can't log in, push once from a terminal so your
+credentials are saved.
+
 ## Config
 
 Each machine has its own `blok.config.json`, which isn't committed. The setup screen writes it, or you can copy
@@ -51,7 +67,7 @@ The server is plain TypeScript that Node 24 runs directly, so it has no build st
 
 ## Layout
 
-- `server/`: Hono API (config, setup, request guard)
+- `server/`: Hono API (config, setup, request guard, git sync)
 - `server/notes/`: the notes core: frontmatter, slugs, the note store (create, edit, rename, trash) and the
   file watcher behind the live `/api/events` stream
 - `src/`: React UI. `src/editor/` has the CodeMirror editor, live styling and autosave.

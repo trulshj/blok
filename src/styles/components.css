@@ -66,6 +66,50 @@ kbd { font: 500 11px var(--mono); padding: 2px 5px; border: 1px solid var(--ink)
 
 .btn--ghost { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 2px var(--ink); }
 
+.sync-wrap { position: relative; }
+.sync {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 4px;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.sync [lang="ja"] { font-weight: 500; letter-spacing: .04em; color: var(--muted); }
+.sync .mono { font-weight: 500; letter-spacing: 0; color: var(--ink-2); }
+.sync:hover:not(:disabled) { text-decoration: underline; text-decoration-thickness: 2px; text-decoration-color: var(--accent); text-underline-offset: 4px; }
+.sync:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.sync:disabled { cursor: default; }
+.sync-dot { width: 9px; height: 9px; border-radius: 50%; outline: 1.5px solid var(--ink); background: var(--taupe); }
+.sync[data-tone="ok"] .sync-dot { background: var(--green); }
+.sync[data-tone="pending"] .sync-dot { background: var(--orange); }
+.sync[data-tone="error"] .sync-dot { background: var(--vermilion); }
+.sync[disabled][data-tone="pending"] .sync-dot { animation: blink 1s steps(1) infinite; }
+
+.sync-pop {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 10px);
+  right: 0;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  width: 380px;
+  padding: 12px 12px 12px 14px;
+  background: var(--cream);
+  border: 2px solid var(--ink);
+  border-left: 8px solid var(--green);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.sync-pop--error { border-left-color: var(--vermilion); }
+.sync-pop p { margin: 0; flex: 1; user-select: text; }
+.sync-pop-close { font-size: 18px; line-height: 1; padding: 0 4px; }
+.sync-pop-close:hover { background: var(--panel); }
+
 /* ============================================================
    CHIPS, SELECTS, TAGS
    ============================================================ */

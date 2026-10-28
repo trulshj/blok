@@ -89,5 +89,26 @@ export type RenameNoteRequest = {
   slug?: string;
 };
 
+// ---------- git sync of the notes folder ----------
+
+export type SyncStatus = {
+  /** not-repo: no git; no-remote: git but nowhere to push; otherwise how it compares to the remote. */
+  state: "not-repo" | "no-remote" | "clean" | "changes" | "behind" | "diverged" | "busy";
+  branch: string | null;
+  /** e.g. "origin/main" */
+  upstream: string | null;
+  /** Files changed since the last commit. */
+  changed: number;
+  /** Commits to push, and to pull as of the last fetch. */
+  ahead: number;
+  behind: number;
+  fetchedAt: string | null;
+  syncedAt: string | null;
+  /** Why the last sync failed, until the next one works. */
+  error: string | null;
+};
+
+export type SyncResult = { committed: number; pulled: number; pushed: number; status: SyncStatus };
+
 /** Server-sent events on /api/events. */
 export type BlokEvent = { type: "notes"; slugs: string[] };

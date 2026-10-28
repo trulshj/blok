@@ -1,7 +1,7 @@
 import { existsSync, statSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { simpleGit } from "simple-git";
+import { git } from "./git.ts";
 import { z } from "zod";
 import type { SetupStatus } from "../shared/types.ts";
 import { loadConfig, writeConfig, type Config } from "./config.ts";
@@ -63,7 +63,7 @@ export async function createNotesFolder(config: Config, input: z.infer<typeof Se
   if (!existsSync(attributes)) await writeFile(attributes, NOTES_GITATTRIBUTES);
 
   if (input.gitInit && !existsSync(join(next.notesDir, ".git"))) {
-    await simpleGit(next.notesDir).init(["--initial-branch=main"]);
+    await git(next.notesDir, ["init", "--quiet", "--initial-branch=main"]);
   }
 
   return next;

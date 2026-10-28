@@ -11,6 +11,7 @@ import { registerNoteRoutes, RequestError } from "./notes/routes.ts";
 import { createNoteStore, NoteError, type NoteStore } from "./notes/store.ts";
 import { watchNotes, type NotesWatcher } from "./notes/watch.ts";
 import { createNotesFolder, SetupError, SetupInput, setupStatus } from "./setup.ts";
+import { createSync, SyncError, type Sync } from "./sync.ts";
 
 const NOTE_ERROR_STATUS = {
   "invalid-slug": 400,
@@ -29,7 +30,7 @@ export function createApp(root: string, { watch = false } = {}) {
 
   // The store, catalog and watcher for the current notes folder, created once setup is done
   // and replaced if the folder changes.
-  type Runtime = { dir: string; store: NoteStore; catalog: Catalog; watcher?: NotesWatcher };
+  type Runtime = { dir: string; store: NoteStore; catalog: Catalog; sync: Sync; watcher?: NotesWatcher };
   let runtime: Runtime | null = null;
   function notes(): Runtime | null {
     if (!setupStatus(config).ready) return null;
@@ -41,7 +42,13 @@ export function createApp(root: string, { watch = false } = {}) {
         await catalog.refresh(slugs).catch((err) => console.error("Couldn't refresh notes:", err));
         hub.publish({ type: "notes", slugs });
       };
-      runtime = { dir: config.notesDir, store, catalog, watcher: watch ? watchNotes(store.dir, onChange) : undefined };
+      runtime = {
+        dir: config.notesDir,
+        store,
+        catalog,
+        sync: createSync(config.notesDir),
+        watcher: watch ? watchNotes(store.dir, onChange) : undefined,
+      };
     }
     return runtime;
   }
@@ -79,6 +86,25 @@ export function createApp(root: string, { watch = false } = {}) {
   });
 
   registerNoteRoutes(app, notes);
+
+  // git sync of the notes folder; ?fetch=1 also checks the remote (at most once a minute)
+  const syncFor = () => {
+    const r = notes();
+    if (!r) throw new RequestError(409, "Set up the notes folder first");
+    return r.sync;
+  };
+
+  app.get("/api/sync", async (c) => c.json(await syncFor().status({ fetch: c.req.query("fetch") === "1" })));
+
+  app.post("/api/sync", async (c) => {
+    const sync = syncFor();
+    try {
+      return c.json(await sync.sync());
+    } catch (err) {
+      if (!(err instanceof SyncError)) throw err;
+      return c.json({ error: err.message, status: await sync.status() }, 409);
+    }
+  });
 
   // live updates: one "notes" event per batch of changed note folders
   app.get("/api/events", (c) =>

@@ -2,6 +2,7 @@ import { Link, useLocation } from "wouter";
 import { Logo } from "./Logo.tsx";
 import { NewNote } from "./NewNote.tsx";
 import { SearchBox } from "./SearchBox.tsx";
+import { SyncButton } from "./SyncButton.tsx";
 
 /** Wordmark, plus navigation, search and "+ New" once the notes folder is set up. */
 export function TopBar({ ready }: { ready: boolean }) {
@@ -28,6 +29,7 @@ export function TopBar({ ready }: { ready: boolean }) {
             </span>
           </nav>
           <SearchBox />
+          <SyncButton />
           <NewNote />
         </>
       )}
