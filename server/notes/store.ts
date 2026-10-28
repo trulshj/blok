@@ -4,9 +4,10 @@ import { mkdir, readdir, readFile, rename, stat, unlink, writeFile } from "node:
 import { dirname, join, resolve } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 import type { CreateNoteRequest, Note, NoteMeta, NoteSummary, UpdateNoteRequest } from "../../shared/types.ts";
-import { DEFAULTS, normalizeTags, parseNoteFile, serializeNote, type ParsedNote } from "./frontmatter.ts";
+import { normalizeTags } from "../../shared/tags.ts";
+import { DEFAULTS, parseNoteFile, serializeNote, type ParsedNote } from "./frontmatter.ts";
 import { preview } from "./preview.ts";
-import { isValidSlug, slugify, stamp, uniqueSlug } from "./slug.ts";
+import { isValidSlug, slugify, stamp, uniqueSlug } from "../../shared/slug.ts";
 
 export const NOTE_FILE = "index.md";
 export const TRASH_DIR = ".trash";

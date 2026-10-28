@@ -83,7 +83,7 @@ export function NoteCard({ note, code, feature = false, activeTag, onTag }: Prop
       {(meta.excerpt || note.preview) && <p className="card-excerpt">{meta.excerpt || note.preview}</p>}
 
       <footer className="card-foot">
-        <span className="lang" title={LANG_LABELS[meta.lang].ja}>
+        <span className="lang" title={`${LANG_LABELS[meta.lang].en} · ${LANG_LABELS[meta.lang].ja}`}>
           {LANG_LABELS[meta.lang].code}
         </span>
         {meta.tags.map((tag) => (

@@ -1,6 +1,6 @@
 import MiniSearch from "minisearch";
 import type { Note, NoteSummary, SearchResult } from "../../shared/types.ts";
-import { foldLatin } from "./slug.ts";
+import { foldLatin } from "../../shared/slug.ts";
 import { NoteError, type NoteStore } from "./store.ts";
 
 type SearchDoc = { slug: string; title: string; titleJa: string; tags: string; excerpt: string; body: string };

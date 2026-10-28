@@ -56,7 +56,8 @@ export function FilterBar({ filters, onChange, tags }: Props) {
               type="button"
               className={on ? "chip is-on" : "chip"}
               aria-pressed={on}
-              title={LANG_LABELS[lang].ja}
+              aria-label={LANG_LABELS[lang].en}
+              title={`${LANG_LABELS[lang].en} · ${LANG_LABELS[lang].ja}`}
               onClick={() => onChange({ langs: toggle(filters.langs, lang) })}
             >
               {LANG_LABELS[lang].code}

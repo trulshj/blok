@@ -1,5 +1,6 @@
 import { Document, isSeq, parse } from "yaml";
 import { z } from "zod";
+import { normalizeTags } from "../../shared/tags.ts";
 import { NOTE_LANGS, NOTE_STATUSES, NOTE_TYPES, type NoteMeta } from "../../shared/types.ts";
 
 /**
@@ -26,12 +27,6 @@ const KEY_ORDER = ["title", "titleJa", "type", "lang", "status", "tags", "excerp
 const KNOWN = new Set<string>(KEY_ORDER);
 
 const timestamp = z.union([z.iso.datetime({ offset: true }), z.iso.date()]);
-
-/** Lowercase, no leading #, spaces to dashes, no duplicates or empties. */
-export function normalizeTags(tags: string[]): string[] {
-  const clean = tags.map((t) => t.trim().replace(/^#+/, "").trim().replace(/\s+/g, "-").toLowerCase()).filter(Boolean);
-  return [...new Set(clean)];
-}
 
 const FIELDS = {
   title: z.string().trim().min(1),

@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { NoteSummary } from "../../shared/types.ts";
 import { stationCodes } from "./codes.ts";
-import { relativeTime, splitTitle, titleSize } from "./format.ts";
+import { countText, relativeTime, splitTitle, titleSize } from "./format.ts";
+
+it("countText counts Latin words and Japanese characters separately", () => {
+  expect(countText("Walked 先斗町 Pontochō on **Street View**, isn't it? 提灯と暖簾。")).toEqual({ words: 7, cjk: 8 });
+  expect(countText("")).toEqual({ words: 0, cjk: 0 });
+  expect(countText("## Next\n- one-two\n- 3")).toEqual({ words: 3, cjk: 0 });
+});
 
 describe("relativeTime", () => {
   const now = new Date(2026, 9, 28, 12, 0); // local time

@@ -15,8 +15,8 @@ export const STATUS_LABELS: Record<NoteStatus, { en: string; kanji: string; read
   evergreen: { en: "Evergreen", kanji: "常緑", reading: "じょうりょく" },
 };
 
-export const LANG_LABELS: Record<NoteLang, { code: string; ja: string }> = {
-  no: { code: "NO", ja: "ノルウェー語" },
-  en: { code: "EN", ja: "英語" },
-  ja: { code: "JA", ja: "日本語" },
+export const LANG_LABELS: Record<NoteLang, { code: string; en: string; ja: string }> = {
+  no: { code: "NO", en: "Norwegian", ja: "ノルウェー語" },
+  en: { code: "EN", en: "English", ja: "英語" },
+  ja: { code: "JA", en: "Japanese", ja: "日本語" },
 };

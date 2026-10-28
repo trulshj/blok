@@ -42,6 +42,15 @@ export function titleSize(lines: string[], width: number, max: number): number {
   return Math.max(28, Math.min(max, Math.floor(width / (longest * 0.42))));
 }
 
+const CJK = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/gu;
+
+/** Words in Latin text, and Japanese characters counted separately (Japanese has no spaces to count). */
+export function countText(text: string): { words: number; cjk: number } {
+  const cjk = text.match(CJK)?.length ?? 0;
+  const words = text.replace(CJK, " ").match(/[\p{L}\p{N}]+(?:['’-][\p{L}\p{N}]+)*/gu)?.length ?? 0;
+  return { words, cjk };
+}
+
 function startOfDay(d: Date): number {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
 }

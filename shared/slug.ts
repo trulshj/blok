@@ -1,5 +1,6 @@
 // Note folder names are ASCII slugs. macOS and Windows can store non-ASCII filenames in
 // different Unicode forms, which git then sees as different names.
+// Shared so the editor can tell when a note's slug no longer matches its title.
 
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const MAX_LENGTH = 60;

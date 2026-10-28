@@ -1,6 +1,6 @@
 import { watch } from "chokidar";
 import { relative, sep } from "node:path";
-import { isValidSlug } from "./slug.ts";
+import { isValidSlug } from "../../shared/slug.ts";
 
 export type NotesWatcher = { ready: Promise<void>; close: () => Promise<void> };
 

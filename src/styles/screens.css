@@ -38,7 +38,7 @@
 .index-message { margin: 32px 40px; }
 
 /* ============================================================
-   NOTE (read-only until the editor lands)
+   NOTE (editor styles are in editor.css)
    ============================================================ */
 .back {
   align-self: flex-start;
@@ -54,25 +54,10 @@
 .back [lang="ja"] { font-weight: 500; letter-spacing: .04em; color: var(--muted); }
 .back:hover { text-decoration: underline; text-decoration-thickness: 2px; text-decoration-color: var(--accent); }
 
-.note-head { display: flex; align-items: center; gap: 36px; margin-top: 24px; }
+.note-head { display: flex; align-items: center; gap: 36px; margin: 44px 0 32px; }
 .note-head .compose { --block: var(--t); --block-ink: var(--t-ink); padding: 0 0 24px; }
 .note-head .slab-v { font-size: 24px; }
-
-.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 20px; margin: 0; font-size: 14px; }
-.facts dt { align-self: center; font-weight: 700; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; }
-.facts dd { margin: 0; display: flex; flex-wrap: wrap; gap: 4px 10px; }
-.facts dd .tag { font-size: 12.5px; }
-
-.lead { margin: 0; max-width: 60ch; font-size: 18px; line-height: 1.55; }
-.raw-body {
-  margin: 0;
-  max-width: 66ch;
-  font-family: var(--ui);
-  font-size: 17px;
-  line-height: 1.75;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
+.note-title-click { cursor: text; }
 
 /* ============================================================
    RESPONSIVE
