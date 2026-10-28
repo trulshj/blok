@@ -108,6 +108,21 @@ code { font-size: .9em; overflow-wrap: anywhere; }
   background: var(--block, var(--accent));
 }
 .bt:first-child::before { top: calc(var(--rise) * 1em); }
+/* The first line rises above its block: letters are ink above the block's top edge and block ink
+   inside it, so light text on a dark block (story's indigo) still reads against the paper. */
+.bt:first-child {
+  background: linear-gradient(
+    to bottom,
+    var(--ink) calc(var(--rise) * 1em),
+    var(--block-ink, var(--ink)) calc(var(--rise) * 1em)
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+@media (forced-colors: active) {
+  .bt:first-child { background: none; color: CanvasText; }
+}
 .bt + .bt { margin-left: .42em; }
 @supports not (text-box: trim-both cap alphabetic) {
   .block-title { line-height: .8; gap: 0; }
