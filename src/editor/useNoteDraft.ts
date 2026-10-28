@@ -7,7 +7,7 @@ import { useNote } from "../queries.ts";
 import { ConflictError, createAutosaver, type SaveStatus } from "./autosave.ts";
 import type { EditorHandle } from "./Editor.tsx";
 
-const toInput = ({ created, updated, ...input }: NoteMeta): NoteMetaInput => input;
+const toInput = ({ created, updated, published, ...input }: NoteMeta): NoteMetaInput => input;
 
 /**
  * The editable copy of a note: metadata in state, body in a ref (the editor owns the text),

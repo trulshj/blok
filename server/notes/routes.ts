@@ -1,11 +1,10 @@
 import type { Context, Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
-import { readFile, stat } from "node:fs/promises";
 import { z } from "zod";
 import { slugify } from "../../shared/slug.ts";
 import { NOTE_LANGS, NOTE_STATUSES, NOTE_TYPES, type NoteImage, type UploadedImage } from "../../shared/types.ts";
 import type { Catalog } from "./catalog.ts";
-import { altFromName, IMAGE_FILE, IMAGE_TYPES, imageSize, MAX_UPLOAD_BYTES, toAvif } from "./images.ts";
+import { altFromName, IMAGE_FILE, imageSize, MAX_UPLOAD_BYTES, serveImage, toAvif } from "./images.ts";
 import type { NoteStore } from "./store.ts";
 
 export class RequestError extends Error {
@@ -33,7 +32,7 @@ const CreateInput = MetaInput.partial().extend({ title: MetaInput.shape.title, b
 const UpdateInput = z.object({ meta: MetaInput, body: Body, baseUpdated: z.string().optional() });
 const RenameInput = z.object({ slug: z.string().optional() });
 
-async function readJson<T extends z.ZodType>(c: Context, schema: T): Promise<z.output<T>> {
+export async function readJson<T extends z.ZodType>(c: Context, schema: T): Promise<z.output<T>> {
   const result = schema.safeParse(await c.req.json().catch(() => null));
   if (!result.success) throw new RequestError(400, z.prettifyError(result.error));
   return result.data;
@@ -138,26 +137,6 @@ export function registerNoteRoutes(app: Hono, runtime: () => { store: NoteStore;
   // the image files themselves, for previews and covers: /files/<slug>/<file>
   app.get("/files/:slug/:file", async (c) => {
     const { store } = notes();
-    const path = store.filePath(c.req.param("slug"), c.req.param("file"), IMAGE_FILE);
-    let info;
-    try {
-      info = await stat(path);
-    } catch {
-      return c.json({ error: "Not found" }, 404);
-    }
-
-    const etag = `"${info.size.toString(16)}-${Math.round(info.mtimeMs).toString(16)}"`;
-    const ext = path.slice(path.lastIndexOf(".") + 1).toLowerCase();
-    const headers: Record<string, string> = {
-      "content-type": IMAGE_TYPES[ext] ?? "application/octet-stream",
-      "cache-control": "no-cache",
-      etag,
-      "x-content-type-options": "nosniff",
-    };
-    // an SVG opened directly runs in blok's origin; don't let it run scripts or load anything
-    if (ext === "svg") headers["content-security-policy"] = "default-src 'none'; style-src 'unsafe-inline'";
-
-    if (c.req.header("if-none-match") === etag) return c.body(null, 304, headers);
-    return c.body(new Uint8Array(await readFile(path)), 200, headers);
+    return serveImage(c, store.filePath(c.req.param("slug"), c.req.param("file"), IMAGE_FILE));
   });
 }

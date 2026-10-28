@@ -23,7 +23,19 @@ export type Fallbacks = { title: string; created: Date; updated: Date };
 /** Defaults for new notes and for files that leave these out. */
 export const DEFAULTS = { type: "note", lang: "en", status: "seedling" } as const satisfies Partial<NoteMeta>;
 
-const KEY_ORDER = ["title", "titleJa", "type", "lang", "status", "tags", "excerpt", "image", "created", "updated"] as const;
+const KEY_ORDER = [
+  "title",
+  "titleJa",
+  "type",
+  "lang",
+  "status",
+  "tags",
+  "excerpt",
+  "image",
+  "created",
+  "updated",
+  "published",
+] as const;
 const KNOWN = new Set<string>(KEY_ORDER);
 
 const timestamp = z.union([z.iso.datetime({ offset: true }), z.iso.date()]);
@@ -42,7 +54,26 @@ const FIELDS = {
   image: z.object({ src: z.string().min(1), alt: z.string() }),
   created: timestamp,
   updated: timestamp,
+  published: z.object({
+    slug: z.string().min(1),
+    file: z.string().min(1),
+    pubDate: z.iso.date(),
+    at: timestamp,
+    hash: z.string(),
+    draft: z.boolean(),
+  }),
 } satisfies Record<(typeof KEY_ORDER)[number], z.ZodType>;
+
+/** The frontmatter as plain data, without blok's defaults ({} if there is none or it doesn't parse). */
+export function rawFrontmatter(text: string): Record<string, unknown> {
+  const { frontmatter } = split(text.replace(/^﻿/, "").replace(/\r\n?/g, "\n"));
+  try {
+    const data: unknown = frontmatter === null ? null : parse(frontmatter);
+    return data !== null && typeof data === "object" && !Array.isArray(data) ? (data as Record<string, unknown>) : {};
+  } catch {
+    return {};
+  }
+}
 
 export function parseNoteFile(text: string, fallbacks: Fallbacks): ParsedNote {
   const { frontmatter, body } = split(text.replace(/^﻿/, "").replace(/\r\n?/g, "\n"));
@@ -84,9 +115,11 @@ export function parseNoteFile(text: string, fallbacks: Fallbacks): ParsedNote {
   const titleJa = value("titleJa");
   const excerpt = value("excerpt");
   const image = value("image");
+  const published = value("published");
   if (titleJa) meta.titleJa = titleJa;
   if (excerpt) meta.excerpt = excerpt;
   if (image) meta.image = image;
+  if (published) meta.published = published;
 
   const extra = Object.fromEntries(Object.entries(data).filter(([key]) => !KNOWN.has(key)));
   return { meta, body, extra, problems, readable };

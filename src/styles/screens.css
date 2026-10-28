@@ -34,6 +34,20 @@
   padding: 44px 40px 56px;
 }
 
+.import-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 24px;
+  margin: 28px 40px 0;
+  padding: 14px 18px;
+  background: var(--cream);
+  border: 2px solid var(--ink);
+  border-left: 8px solid var(--accent);
+}
+.import-banner p { flex: 1; min-width: 280px; margin: 0; font-size: 14px; line-height: 1.5; }
+.import-banner p [lang="ja"] { display: block; color: var(--muted); font-size: 12px; }
+
 .empty { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; padding: 56px 40px; }
 .index-message { margin: 32px 40px; }
 

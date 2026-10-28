@@ -185,21 +185,54 @@
 .dates dt { font-weight: 600; color: var(--ink); text-transform: uppercase; }
 .dates dd { margin: 0; overflow-wrap: anywhere; }
 
-.publish {
+/* publishing (PublishPanel.tsx) */
+.publish-panel {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px 16px;
-  background: var(--ink);
-  color: var(--cream);
-  opacity: .4;
-  font-weight: 700;
-  font-size: 12px;
-  letter-spacing: .1em;
-  text-transform: uppercase;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px 16px;
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  border-left: 8px solid var(--taupe);
 }
-.publish [lang="ja"] { margin-left: 6px; letter-spacing: .06em; }
-.publish .mono { font-weight: 500; letter-spacing: .04em; }
+.publish-panel[data-state="live"] { border-left-color: var(--green); }
+.publish-panel[data-state="draft"] { border-left-color: var(--orange); }
+.publish-state { margin: 0; font-size: 13.5px; line-height: 1.5; }
+.publish-state a { color: var(--ink); font-weight: 600; text-decoration-color: var(--accent); text-decoration-thickness: 2px; }
+.publish-state .hint { display: block; margin-top: 2px; }
+.publish-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.publish-actions .btn { flex: 1; justify-content: center; }
+
+.dialog--wide { width: min(720px, calc(100vw - 32px)); }
+.publish-facts { display: grid; grid-template-columns: auto 1fr; gap: 4px 16px; margin: 0; font: 500 12.5px var(--mono); }
+.publish-facts dt { font-weight: 700; text-transform: uppercase; }
+.publish-facts dd { margin: 0; overflow-wrap: anywhere; color: var(--ink-2); }
+.publish-frontmatter {
+  margin: 0;
+  max-height: 240px;
+  overflow: auto;
+  padding: 12px 14px;
+  background: var(--cream);
+  border: 2px solid var(--ink);
+  font: 500 12.5px/1.55 var(--mono);
+  white-space: pre-wrap;
+}
+.publish-warnings { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; font-size: 13.5px; line-height: 1.45; }
+.publish-warnings li { padding: 8px 12px; background: var(--cream); border-left: 6px solid var(--orange); }
+.publish-warnings li[data-blocking="true"] { border-left-color: var(--vermilion); font-weight: 600; }
+.loading-inline { margin: 0; font: 500 13px var(--mono); }
+.plate--ok {
+  align-self: stretch;
+  margin: 0;
+  background: var(--cream);
+  color: var(--ink);
+  border-left: 6px solid var(--green);
+  white-space: normal;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 600;
+  line-height: 1.45;
+}
 
 .btn--danger { background: var(--vermilion); color: var(--ink); }
 .btn--danger [lang="ja"] { color: var(--ink); }

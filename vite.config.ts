@@ -13,7 +13,7 @@ export default defineConfig({
     host: "127.0.0.1",
     port,
     strictPort: true,
-    proxy: { "/api": api, "/files": api },
+    proxy: { "/api": api, "/files": api, "/truls-public": api },
   },
   test: {
     environment: "node",

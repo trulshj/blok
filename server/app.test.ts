@@ -1,4 +1,4 @@
-import { writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import sharp from "sharp";
 import { afterEach, describe, expect, it } from "vitest";
@@ -245,6 +245,27 @@ describe("images", () => {
     const res = await app.request("/files/kyoto-alley/map.svg", { headers: { host: HOST } });
     expect(res.headers.get("content-type")).toBe("image/svg+xml");
     expect(res.headers.get("content-security-policy")).toContain("default-src 'none'");
+  });
+});
+
+describe("/truls-public", () => {
+  it("serves truls.dev's public images and nothing else", async () => {
+    checkout = tempCheckout();
+    const { app } = createApp(checkout.root);
+    await app.request("/api/setup", post({ notesDir: "../notes", gitInit: false }));
+    // the default trulsDevDir is ../truls.dev, next to the checkout
+    const publicDir = join(checkout.parent, "truls.dev", "public");
+    mkdirSync(join(publicDir, "images"), { recursive: true });
+    writeFileSync(join(publicDir, "images", "headshot-1.avif"), "avif");
+    writeFileSync(join(checkout.parent, "truls.dev", "secret.txt"), "no");
+
+    const ok = await app.request("/truls-public/images/headshot-1.avif", { headers: { host: HOST } });
+    expect(ok.status).toBe(200);
+    expect(ok.headers.get("content-type")).toBe("image/avif");
+
+    for (const path of ["/truls-public/images/..%2F..%2Fsecret.txt", "/truls-public/secret.txt", "/truls-public/images/.hidden.avif"]) {
+      expect((await app.request(path, { headers: { host: HOST } })).status).toBe(400);
+    }
   });
 });
 

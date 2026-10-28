@@ -51,10 +51,27 @@ export type NoteMeta = {
   /** ISO timestamps, set by the server. */
   created: string;
   updated: string;
+  /** Where and when this note went out as a garden post on truls.dev. Set by the server. */
+  published?: PublishInfo;
 };
 
-/** What the client may send when editing; the server owns created/updated. */
-export type NoteMetaInput = Omit<NoteMeta, "created" | "updated">;
+export type PublishInfo = {
+  /** The post's slug on truls.dev: /garden/<slug> */
+  slug: string;
+  /** Repo-relative path of the post file, e.g. "src/content/garden/kyoto-alley.md". */
+  file: string;
+  /** First publish date (YYYY-MM-DD), kept on republish. */
+  pubDate: string;
+  /** Last publish (ISO). */
+  at: string;
+  /** sha256 of the file blok last wrote, to notice edits made directly in truls.dev. */
+  hash: string;
+  /** Unpublished: the post is there with isDraft: true. */
+  draft: boolean;
+};
+
+/** What the client may send when editing; the server owns the timestamps and publish info. */
+export type NoteMetaInput = Omit<NoteMeta, "created" | "updated" | "published">;
 
 export type NoteSummary = {
   slug: string;
@@ -88,6 +105,40 @@ export type RenameNoteRequest = {
   /** New slug. Leave out to derive it from the current title. */
   slug?: string;
 };
+
+// ---------- publishing to truls.dev ----------
+
+export type PublishWarning = {
+  code: "no-site" | "not-repo" | "wrong-branch" | "unfinished-git" | "edited" | "slug-taken" | "missing-image" | "other-commits" | "file-gone";
+  message: string;
+  /** Stops publishing; "edited" and "slug-taken" can be overridden with force. */
+  blocking: boolean;
+};
+
+export type PublishPreview = {
+  /** new: never published; update: live now; draft: unpublished (isDraft). */
+  state: "new" | "update" | "draft";
+  slug: string;
+  file: string;
+  url: string;
+  /** The frontmatter block as it will be written. */
+  frontmatter: string;
+  /** Repo-relative image files that will be copied. */
+  images: string[];
+  warnings: PublishWarning[];
+};
+
+export type PublishResult = {
+  url: string;
+  /** Short commit hash, or null when nothing changed. */
+  commit: string | null;
+  pushed: boolean;
+  /** Why the push didn't happen, if it didn't. */
+  pushError: string | null;
+  published: PublishInfo;
+};
+
+export type ImportablePost = { file: string; slug: string; title: string; draft: boolean };
 
 // ---------- git sync of the notes folder ----------
 

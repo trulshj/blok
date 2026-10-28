@@ -5,7 +5,7 @@ it.each([
   ["./render-01.avif", "/files/kyoto-alley/render-01.avif"],
   ["render-01.avif", "/files/kyoto-alley/render-01.avif"],
   ["https://example.com/a.png", "https://example.com/a.png"],
-  ["/images/headshot.avif", null], // truls.dev paths can't be shown here
+  ["/images/headshot.avif", "/truls-public/images/headshot.avif"], // truls.dev's own images
   ["../other/x.avif", null],
   ["./.hidden.avif", null],
 ])("imageUrl(%j) → %j", (src, url) => {

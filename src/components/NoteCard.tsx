@@ -37,6 +37,11 @@ export function NoteCard({ note, code, feature = false, activeTag, onTag }: Prop
           {type.short}
           <span lang="ja">{type.ja}</span>
         </span>
+        {meta.published && !meta.published.draft && (
+          <span className="card-published" lang="ja" title={`Published on truls.dev/garden/${meta.published.slug}`}>
+            公開
+          </span>
+        )}
         {note.problems.length > 0 && (
           <span className="card-warn" title={note.problems.join("\n")} aria-label="Frontmatter problems">
             !

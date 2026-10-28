@@ -7,6 +7,8 @@ import { createHub } from "./events.ts";
 import { localOnly } from "./guard.ts";
 import { createCatalog, type Catalog } from "./notes/catalog.ts";
 import { ImageError } from "./notes/images.ts";
+import { createPublisher, PublishError, type Publisher } from "./publish/publisher.ts";
+import { registerPublishRoutes } from "./publish/routes.ts";
 import { registerNoteRoutes, RequestError } from "./notes/routes.ts";
 import { createNoteStore, NoteError, type NoteStore } from "./notes/store.ts";
 import { watchNotes, type NotesWatcher } from "./notes/watch.ts";
@@ -30,11 +32,20 @@ export function createApp(root: string, { watch = false } = {}) {
 
   // The store, catalog and watcher for the current notes folder, created once setup is done
   // and replaced if the folder changes.
-  type Runtime = { dir: string; store: NoteStore; catalog: Catalog; sync: Sync; watcher?: NotesWatcher };
+  type Runtime = {
+    key: string;
+    store: NoteStore;
+    catalog: Catalog;
+    sync: Sync;
+    publisher: Publisher;
+    siteDir: string;
+    watcher?: NotesWatcher;
+  };
   let runtime: Runtime | null = null;
   function notes(): Runtime | null {
     if (!setupStatus(config).ready) return null;
-    if (runtime?.dir !== config.notesDir) {
+    const key = `${config.notesDir}|${config.trulsDevDir}`;
+    if (runtime?.key !== key) {
       void runtime?.watcher?.close();
       const store = createNoteStore(config.notesDir);
       const catalog = createCatalog(store);
@@ -43,10 +54,12 @@ export function createApp(root: string, { watch = false } = {}) {
         hub.publish({ type: "notes", slugs });
       };
       runtime = {
-        dir: config.notesDir,
+        key,
         store,
         catalog,
         sync: createSync(config.notesDir),
+        publisher: createPublisher({ siteDir: config.trulsDevDir, store }),
+        siteDir: config.trulsDevDir,
         watcher: watch ? watchNotes(store.dir, onChange) : undefined,
       };
     }
@@ -59,6 +72,7 @@ export function createApp(root: string, { watch = false } = {}) {
     if (err instanceof NoteError) return c.json({ error: err.message, code: err.code }, NOTE_ERROR_STATUS[err.code]);
     if (err instanceof RequestError) return c.json({ error: err.message }, err.status);
     if (err instanceof ImageError) return c.json({ error: err.message }, 422);
+    if (err instanceof PublishError) return c.json({ error: err.message, code: err.code }, 409);
     console.error(err);
     return c.json({ error: err.message }, 500);
   });
@@ -86,6 +100,7 @@ export function createApp(root: string, { watch = false } = {}) {
   });
 
   registerNoteRoutes(app, notes);
+  registerPublishRoutes(app, notes);
 
   // git sync of the notes folder; ?fetch=1 also checks the remote (at most once a minute)
   const syncFor = () => {
@@ -129,6 +144,7 @@ export function createApp(root: string, { watch = false } = {}) {
 
   app.all("/api/*", (c) => c.json({ error: "Not found" }, 404));
   app.all("/files/*", (c) => c.json({ error: "Not found" }, 404));
+  app.all("/truls-public/*", (c) => c.json({ error: "Not found" }, 404));
 
   return {
     app,

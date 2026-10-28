@@ -43,6 +43,26 @@ stays clean and your commit is kept. It then tells you which notes clash and the
 terminal. Git never waits for a password: if it can't log in, push once from a terminal so your
 credentials are saved.
 
+## Publishing to truls.dev
+
+A note's details panel has a **truls.dev** section. **Publish…** opens a preview of exactly what will
+happen: the file (`src/content/garden/<slug>.md`, or `.mdx` when the note uses components), the
+frontmatter, and the images to copy. Then blok:
+
+1. Writes the post and copies images to `public/images/garden/<slug>/`, rewriting `./image.avif` links.
+2. Commits only those files in truls.dev, never your other work there.
+3. Pushes `main`, which Vercel deploys.
+
+- **Republishing** updates the post and keeps the first publish date.
+- **Unpublish** sets `isDraft: true`.
+- **Edited posts:** if a post was edited directly in truls.dev, or its slug belongs to another post,
+  blok asks before replacing it.
+- **Newer commits on GitHub:**
+  - If truls.dev is clean, blok rebases first.
+  - If it has uncommitted changes, blok leaves them alone: the post stays committed locally, and blok
+    asks you to pull.
+- **Import:** garden posts already on truls.dev can be imported from the banner on the index.
+
 ## Config
 
 Each machine has its own `blok.config.json`, which isn't committed. The setup screen writes it, or you can copy
@@ -68,6 +88,7 @@ The server is plain TypeScript that Node 24 runs directly, so it has no build st
 ## Layout
 
 - `server/`: Hono API (config, setup, request guard, git sync)
+- `server/publish/`: publishing notes to truls.dev, and importing its garden posts
 - `server/notes/`: the notes core: frontmatter, slugs, the note store (create, edit, rename, trash) and the
   file watcher behind the live `/api/events` stream
 - `src/`: React UI. `src/editor/` has the CodeMirror editor, live styling and autosave.

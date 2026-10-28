@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { slugify } from "../../shared/slug.ts";
-import { NOTE_LANGS, NOTE_STATUSES, NOTE_TYPES, type NoteMeta, type NoteMetaInput } from "../../shared/types.ts";
+import { NOTE_LANGS, NOTE_STATUSES, NOTE_TYPES, type NoteMeta, type NoteMetaInput, type PublishInfo } from "../../shared/types.ts";
 import type { StationCode } from "../lib/codes.ts";
 import { dateTime } from "../lib/format.ts";
 import { formatBytes, imageUrl } from "../lib/images.ts";
 import { LANG_LABELS, STATUS_LABELS, TYPE_LABELS } from "../lib/labels.ts";
 import { useNoteImages } from "../queries.ts";
+import { PublishPanel } from "./PublishPanel.tsx";
 import { Stamp } from "./Stamp.tsx";
 import { TagInput } from "./TagInput.tsx";
 
@@ -17,6 +18,9 @@ type Props = {
   onChange: (patch: Partial<NoteMetaInput>) => void;
   onRename: () => Promise<void>;
   onTrash: () => Promise<void>;
+  published: PublishInfo | undefined;
+  beforePublish: () => Promise<void>;
+  publishBlocked: string | null;
 };
 
 /** Pick the cover from the images in the note's folder, plus alt text for it. */
@@ -81,7 +85,7 @@ function CoverPicker({
 }
 
 /** The note's details, edited in place and autosaved with the text. */
-export function MetaPanel({ slug, meta, dates, code, onChange, onRename, onTrash }: Props) {
+export function MetaPanel({ slug, meta, dates, code, onChange, onRename, onTrash, published, beforePublish, publishBlocked }: Props) {
   const [confirmTrash, setConfirmTrash] = useState(false);
   const [busy, setBusy] = useState<"rename" | "trash" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -231,12 +235,7 @@ export function MetaPanel({ slug, meta, dates, code, onChange, onRename, onTrash
         </button>
       )}
 
-      <div className="publish" aria-disabled="true">
-        <span>
-          Publish to truls.dev<span lang="ja">公開</span>
-        </span>
-        <span className="mono">PHASE 2</span>
-      </div>
+      <PublishPanel slug={slug} published={published} beforePublish={beforePublish} blocked={publishBlocked} />
 
       <button
         type="button"

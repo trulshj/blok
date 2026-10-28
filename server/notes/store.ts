@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import { mkdir, readdir, readFile, rename, stat, unlink, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
-import type { CreateNoteRequest, Note, NoteMeta, NoteSummary, UpdateNoteRequest } from "../../shared/types.ts";
+import type { CreateNoteRequest, Note, NoteMeta, NoteSummary, PublishInfo, UpdateNoteRequest } from "../../shared/types.ts";
 import { normalizeTags } from "../../shared/tags.ts";
 import { DEFAULTS, parseNoteFile, serializeNote, type ParsedNote } from "./frontmatter.ts";
 import { preview } from "./preview.ts";
@@ -158,7 +158,29 @@ export function createNoteStore(notesDir: string, { now = () => new Date() } = {
         if (input.meta.titleJa?.trim()) meta.titleJa = input.meta.titleJa.trim();
         if (input.meta.excerpt?.trim()) meta.excerpt = input.meta.excerpt.trim();
         if (input.meta.image) meta.image = input.meta.image;
+        if (current.meta.published) meta.published = current.meta.published; // server-owned
         return save(slug, meta, current.extra, input.body);
+      });
+    },
+
+    /** Records (or clears) where the note is published. Leaves `updated` alone: it's not an edit. */
+    setPublished(slug: string, published: PublishInfo | undefined): Promise<Note> {
+      return exclusive(async () => {
+        const current = await load(slug);
+        if (!current.readable) {
+          throw new NoteError("unreadable", `The frontmatter in notes/${slug}/${NOTE_FILE} can't be read. Fix it by hand first.`);
+        }
+        const { published: _old, ...rest } = current.meta;
+        const meta: NoteMeta = published ? { ...rest, published } : rest;
+        return save(slug, meta, current.extra, current.body);
+      });
+    },
+
+    /** Adds a note with given metadata and dates (for imports), under `slug` or a free variant of it. */
+    importNote(slug: string, meta: NoteMeta, body: string): Promise<Note> {
+      return exclusive(async () => {
+        if (!isValidSlug(slug)) throw new NoteError("invalid-slug", `"${slug}" isn't a valid note name`);
+        return save(uniqueSlug(slug, taken), meta, {}, body);
       });
     },
 

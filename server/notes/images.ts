@@ -1,3 +1,5 @@
+import type { Context } from "hono";
+import { readFile, stat } from "node:fs/promises";
 import sharp from "sharp";
 
 export const MAX_UPLOAD_BYTES = 60 * 1024 * 1024;
@@ -44,6 +46,32 @@ export async function imageSize(path: string): Promise<{ width: number; height: 
   } catch {
     return { width: 0, height: 0 };
   }
+}
+
+/**
+ * Responds with an image file (already path-checked by the caller): ETag for cheap reloads,
+ * nosniff, and for SVGs a CSP that stops scripts, since an SVG opened directly runs in blok's origin.
+ */
+export async function serveImage(c: Context, path: string): Promise<Response> {
+  let info;
+  try {
+    info = await stat(path);
+  } catch {
+    return c.json({ error: "Not found" }, 404);
+  }
+
+  const etag = `"${info.size.toString(16)}-${Math.round(info.mtimeMs).toString(16)}"`;
+  const ext = path.slice(path.lastIndexOf(".") + 1).toLowerCase();
+  const headers: Record<string, string> = {
+    "content-type": IMAGE_TYPES[ext] ?? "application/octet-stream",
+    "cache-control": "no-cache",
+    etag,
+    "x-content-type-options": "nosniff",
+  };
+  if (ext === "svg") headers["content-security-policy"] = "default-src 'none'; style-src 'unsafe-inline'";
+
+  if (c.req.header("if-none-match") === etag) return c.body(null, 304, headers);
+  return c.body(new Uint8Array(await readFile(path)), 200, headers);
 }
 
 /** Alt text from a file name: "Render_01-final.png" → "Render 01 final". */

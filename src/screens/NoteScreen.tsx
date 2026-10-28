@@ -182,6 +182,17 @@ function NoteEditor({ note }: { note: Note }) {
           onChange={draft.setMeta}
           onRename={rename}
           onTrash={trash}
+          published={saved.meta.published}
+          beforePublish={async () => {
+            await draft.saveNow();
+          }}
+          publishBlocked={
+            draft.status.state === "conflict"
+              ? "Sort out the change made elsewhere first."
+              : draft.status.state === "error" || draft.status.state === "blocked"
+                ? `Save the note first: ${draft.status.message}`
+                : null
+          }
         />
       </div>
 
