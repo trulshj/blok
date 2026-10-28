@@ -32,6 +32,10 @@
   --ui: var(--latin-face), var(--jp-face), sans-serif;
   --jp: var(--jp-face), sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  /* UI text (labels, chips, buttons, fields, hints) is sized in px times this, so it can be tuned in
+     one place. Note text, headings and display titles keep their own sizes. */
+  --ui-text: 1.12;
 }
 
 /* paper presets, for comparing in the sketch */

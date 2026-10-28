@@ -29,7 +29,7 @@ code { font-size: .9em; overflow-wrap: anywhere; }
 }
 
 .screen { padding: 44px 40px 64px; display: flex; flex-direction: column; gap: 36px; }
-.loading { padding: 44px 40px; font: 500 13px var(--mono); }
+.loading { padding: 44px 40px; font: 500 calc(13px * var(--ui-text)) var(--mono); }
 
 /* ============================================================
    SHARED PIECES
@@ -39,7 +39,7 @@ code { font-size: .9em; overflow-wrap: anywhere; }
   display: flex;
   gap: 14px;
   font-weight: 700;
-  font-size: 13px;
+  font-size: calc(13px * var(--ui-text));
   line-height: 1.45;
   letter-spacing: .1em;
   text-transform: uppercase;
@@ -55,7 +55,7 @@ code { font-size: .9em; overflow-wrap: anywhere; }
   background: var(--ink);
   color: var(--cream);
   font-weight: 700;
-  font-size: 13px;
+  font-size: calc(13px * var(--ui-text));
   line-height: 1.1;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -181,14 +181,14 @@ code { font-size: .9em; overflow-wrap: anywhere; }
   flex-direction: column;
   gap: 2px;
   font-weight: 700;
-  font-size: 11px;
+  font-size: calc(11px * var(--ui-text));
   line-height: 1.15;
   letter-spacing: .12em;
   text-transform: uppercase;
 }
-.flabel [lang="ja"] { font-weight: 500; font-size: 10.5px; letter-spacing: .06em; color: var(--muted); text-transform: none; }
+.flabel [lang="ja"] { font-weight: 500; font-size: calc(10.5px * var(--ui-text)); letter-spacing: .06em; color: var(--muted); text-transform: none; }
 
-.hint { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--muted); }
+.hint { margin: 0; font-size: calc(12.5px * var(--ui-text)); line-height: 1.5; color: var(--muted); }
 
 /* form fields and buttons */
 .field {
@@ -197,7 +197,7 @@ code { font-size: .9em; overflow-wrap: anywhere; }
   background: var(--cream);
   border: 2px solid var(--ink);
   border-radius: 0;
-  font-size: 14px;
+  font-size: calc(14px * var(--ui-text));
   line-height: 1.5;
 }
 .field:focus-visible { outline: 3px solid var(--accent); outline-offset: 0; }
@@ -210,7 +210,7 @@ code { font-size: .9em; overflow-wrap: anywhere; }
   background: var(--ink);
   color: var(--cream);
   font-weight: 700;
-  font-size: 12.5px;
+  font-size: calc(12.5px * var(--ui-text));
   letter-spacing: .1em;
   text-transform: uppercase;
 }
@@ -275,7 +275,7 @@ code { font-size: .9em; overflow-wrap: anywhere; }
   gap: 16px;
   padding: 12px 16px 12px 12px;
   background: var(--cream);
-  font-size: 14px;
+  font-size: calc(14px * var(--ui-text));
   line-height: 1.5;
 }
 .check-mark {
@@ -293,9 +293,9 @@ code { font-size: .9em; overflow-wrap: anywhere; }
 
 .setup-form { display: flex; flex-direction: column; gap: 14px; max-width: 880px; }
 .field-group { display: flex; flex-direction: column; gap: 8px; }
-.checkbox { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+.checkbox { display: flex; align-items: center; gap: 10px; font-size: calc(14px * var(--ui-text)); }
 .checkbox input { width: 18px; height: 18px; accent-color: var(--ink); }
-.checkbox .mono { font-size: 12px; color: var(--muted); }
+.checkbox .mono { font-size: calc(12px * var(--ui-text)); color: var(--muted); }
 .actions { display: flex; gap: 12px; margin-top: 6px; }
 
 /* ============================================================
