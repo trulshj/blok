@@ -56,8 +56,8 @@
 }
 
 /* garden type -> line colour (--t) and the ink that reads on it (--t-ink) */
-[data-type="writing"] { --t: var(--orange); --t-ink: var(--ink); }
-[data-type="art"] { --t: var(--vermilion); --t-ink: var(--ink); }
-[data-type="story"] { --t: var(--indigo); --t-ink: var(--cream); }
+[data-type="longread"] { --t: var(--orange); --t-ink: var(--ink); }
 [data-type="note"] { --t: var(--teal); --t-ink: var(--ink); }
-[data-type="visualization"] { --t: var(--green); --t-ink: var(--ink); }
+[data-type="art"] { --t: var(--vermilion); --t-ink: var(--ink); }
+[data-type="interactive"] { --t: var(--green); --t-ink: var(--ink); }
+/* indigo has no type for now; cream is the ink that reads on it */

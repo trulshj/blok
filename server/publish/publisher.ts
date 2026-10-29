@@ -287,7 +287,7 @@ export function createPublisher({ siteDir, store, now = () => new Date() }: { si
       // garden defaults where the post leaves fields out (blok's own defaults differ)
       const meta: NoteMeta = {
         ...parsed.meta,
-        type: raw.type === undefined ? "writing" : parsed.meta.type,
+        type: raw.type === undefined ? "longread" : parsed.meta.type,
         lang: raw.lang === undefined ? "no" : parsed.meta.lang,
         created,
         updated,

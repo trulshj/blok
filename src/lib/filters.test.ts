@@ -23,8 +23,8 @@ function note(slug: string, meta: Partial<NoteMeta>): NoteSummary {
 const notes = [
   note("kyoto", { title: "Kyoto alley", type: "art", tags: ["blender", "kyoto"], updated: "2026-10-28T09:00:00Z", created: "2026-10-01T00:00:00Z" }),
   note("kanji", { title: "Kanji mix-ups", tags: ["japanese"], status: "budding", updated: "2026-10-25T09:00:00Z", created: "2026-10-20T00:00:00Z" }),
-  note("hva", { title: "Hva er visualisering?", type: "writing", lang: "no", status: "evergreen", updated: "2026-03-12T09:00:00Z", created: "2026-03-01T00:00:00Z" }),
-  note("shoji", { title: "Geometry nodes: shoji", type: "writing", tags: ["blender"], updated: "2026-10-20T09:00:00Z", created: "2026-10-15T00:00:00Z" }),
+  note("hva", { title: "Hva er visualisering?", type: "longread", lang: "no", status: "evergreen", updated: "2026-03-12T09:00:00Z", created: "2026-03-01T00:00:00Z" }),
+  note("shoji", { title: "Geometry nodes: shoji", type: "longread", tags: ["blender"], updated: "2026-10-20T09:00:00Z", created: "2026-10-15T00:00:00Z" }),
 ];
 
 const none: Filters = { types: [], langs: [], statuses: [], tag: null, q: "", sort: "updated" };
@@ -53,8 +53,8 @@ describe("applyFilters", () => {
   });
 
   it("combines filters, treating empty lists as all", () => {
-    expect(slugs(applyFilters(notes, { ...none, types: ["writing"] }))).toEqual(["shoji", "hva"]);
-    expect(slugs(applyFilters(notes, { ...none, types: ["writing"], langs: ["no"] }))).toEqual(["hva"]);
+    expect(slugs(applyFilters(notes, { ...none, types: ["longread"] }))).toEqual(["shoji", "hva"]);
+    expect(slugs(applyFilters(notes, { ...none, types: ["longread"], langs: ["no"] }))).toEqual(["hva"]);
     expect(slugs(applyFilters(notes, { ...none, tag: "blender" }))).toEqual(["kyoto", "shoji"]);
     expect(slugs(applyFilters(notes, { ...none, statuses: ["budding", "evergreen"] }))).toEqual(["kanji", "hva"]);
   });

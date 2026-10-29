@@ -30,7 +30,7 @@ export type SetupRequest = {
 // ---------- notes ----------
 // The fields mirror the truls.dev garden schema, so publishing later is a mapping.
 
-export const NOTE_TYPES = ["writing", "art", "story", "note", "visualization"] as const;
+export const NOTE_TYPES = ["longread", "note", "art", "interactive"] as const;
 export const NOTE_LANGS = ["no", "en", "ja"] as const;
 export const NOTE_STATUSES = ["seedling", "budding", "evergreen"] as const;
 

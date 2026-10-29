@@ -222,7 +222,7 @@ kbd { font: 500 calc(11px * var(--ui-text)) var(--mono); padding: 2px 5px; borde
 .card-stamp { position: absolute; top: -14px; right: 12px; transform: rotate(-10deg); }
 .card-head { display: flex; align-items: center; gap: 10px; padding-right: 48px; }
 .card-head .mosaic { margin-left: auto; }
-.card-type { font-weight: 700; font-size: calc(11px * var(--ui-text)); letter-spacing: .12em; text-transform: uppercase; }
+.card-type { font-weight: 700; font-size: calc(11px * var(--ui-text)); letter-spacing: .12em; text-transform: uppercase; white-space: nowrap; }
 .card-type [lang="ja"] { display: block; font-weight: 500; letter-spacing: .06em; color: var(--muted); }
 .card-warn {
   display: grid;

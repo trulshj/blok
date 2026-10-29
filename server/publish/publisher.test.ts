@@ -33,7 +33,7 @@ title: "Så eh, hva er visualisering?"
 pubDate: 2025-06-10
 excerpt: "En intro."
 isDraft: true
-type: writing
+type: longread
 lang: no
 status: budding
 tags: ["visualisering", "studie"]
@@ -238,7 +238,7 @@ describe("import", () => {
 
     const note = await store.get("hva-er-visualisering");
     expect(note.meta).toMatchObject({
-      type: "writing",
+      type: "longread",
       lang: "no",
       status: "budding",
       tags: ["visualisering", "studie"],

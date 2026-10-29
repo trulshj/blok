@@ -61,9 +61,9 @@ it("stationCodes numbers each type by creation order", () => {
   const codes = stationCodes([
     n("b", "art", "2026-02-01T00:00:00Z"),
     n("a", "art", "2026-01-01T00:00:00Z"),
-    n("c", "visualization", "2026-03-01T00:00:00Z"),
+    n("c", "interactive", "2026-03-01T00:00:00Z"),
   ]);
   expect(codes.get("a")).toEqual({ letter: "A", number: "01" });
   expect(codes.get("b")).toEqual({ letter: "A", number: "02" });
-  expect(codes.get("c")).toEqual({ letter: "V", number: "01" });
+  expect(codes.get("c")).toEqual({ letter: "I", number: "01" });
 });
